@@ -1,0 +1,25 @@
+plugins {
+    id 'java'
+    id 'io.quarkus'
+}
+
+jar {
+    exclude('')
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+dependencies {
+    implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
+    implementation 'io.quarkus:quarkus-jdbc-postgresql'
+    implementation 'io.quarkiverse.mybatis:quarkus-mybatis:1.0.3'
+    implementation 'io.quarkus:quarkus-resteasy-jsonb'
+    implementation 'io.quarkus:quarkus-resteasy'
+    implementation 'io.quarkus:quarkus-smallrye-openapi'
+    implementation 'org.jsoup:jsoup:1.14.3'
+}
+
+version = '1.0.0'

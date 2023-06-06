@@ -5,7 +5,8 @@ public class User {
     private String firstname;
     private String lastname;
 
-    public User(String cip,String firstname, String lastname){
+
+    public User(String cip, String firstname, String lastname){
 
         this.cip = cip;
         this.firstname = firstname;

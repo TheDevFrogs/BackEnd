@@ -1,0 +1,6 @@
+docker-compose down
+docker-compose up -d
+docker container ls
+docker-compose run npmInstall
+docker-compose run npmBuild
+

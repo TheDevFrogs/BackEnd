@@ -1,0 +1,14 @@
+version: '3.9'
+services:
+  database:
+    image: postgres:13
+    container_name: database
+    restart: always
+    ports:
+      - 5445:5432
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DATABASE: ${POSTGRES_DATABASE}
