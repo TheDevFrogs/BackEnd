@@ -42,7 +42,7 @@ public class RoleService {
 
     @GET
     @Path("/student")
-    @RolesAllowed({"étudiant"})
+    @RolesAllowed({"etudiant"})
     public Person student() {
         Person p = new Person();
         p.cip = this.securityContext.getUserPrincipal().getName();
