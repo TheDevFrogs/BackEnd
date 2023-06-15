@@ -8,5 +8,5 @@ public class Group {
     public List<Assignment> assignments;
     public List<Membre> membres;
 
-    public Class aclass;
+    public Classes aclass;
 }

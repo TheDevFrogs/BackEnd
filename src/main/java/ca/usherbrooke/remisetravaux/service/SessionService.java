@@ -1,5 +1,6 @@
 package ca.usherbrooke.remisetravaux.service;
 
+import ca.usherbrooke.remisetravaux.business.Classes;
 import ca.usherbrooke.remisetravaux.persistence.SessionMapper;
 
 import javax.annotation.security.PermitAll;
@@ -26,11 +27,11 @@ public class SessionService {
     @GET
     @Path("{sessionDescription}")
     //@RolesAllowed({"etudiant","enseignant"})
-    public List<Class> getClasses(
+    public List<Classes> getClasses(
             @PathParam("sessionDescription") String sessionDescription
     ){
         String cip = "dadw";
-        List<Class> classes = sessionMapper.getUserSessionClasses(cip,sessionDescription);
+        List<Classes> classes = sessionMapper.getUserSessionClasses(cip,sessionDescription);
         //String cip = this.securityContext.getUserPrincipal().getName();
         return classes;
     }
