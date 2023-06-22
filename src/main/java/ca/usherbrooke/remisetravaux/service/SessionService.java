@@ -32,6 +32,7 @@ public class SessionService {
         String cip = "dadw";
         List<Class> classes = sessionMapper.getUserSessionClasses(cip,sessionDescription);
         //String cip = this.securityContext.getUserPrincipal().getName();
+
         return classes;
     }
 }
