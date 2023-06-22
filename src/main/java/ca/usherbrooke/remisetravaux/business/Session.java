@@ -8,5 +8,5 @@ public class Session {
     public Date start_date;
     public Date end_date;
     public String name;
-    public List<Class> classes;
+    public List<Classes> classes;
 }
