@@ -1,6 +1,8 @@
 package ca.usherbrooke.remisetravaux.service;
 
 import ca.usherbrooke.remisetravaux.business.Classes;
+import ca.usherbrooke.remisetravaux.business.userinfo.SessionAndRole;
+import ca.usherbrooke.remisetravaux.dto.Sessions;
 import ca.usherbrooke.remisetravaux.persistence.SessionMapper;
 
 import javax.annotation.security.PermitAll;
@@ -11,6 +13,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
 import java.security.PublicKey;
+import java.util.ArrayList;
 import java.util.List;
 
 @Path("/session")
@@ -25,15 +28,22 @@ public class SessionService {
     SecurityContext securityContext;
 
     @GET
-    @Path("{sessionDescription}")
-    //@RolesAllowed({"etudiant","enseignant"})
-    public List<Classes> getClasses(
-            @PathParam("sessionDescription") String sessionDescription
-    ){
-        String cip = "dadw";
-        List<Classes> classes = sessionMapper.getUserSessionClasses(cip,sessionDescription);
-        //String cip = this.securityContext.getUserPrincipal().getName();
+    @Path("/sessions")
+    @RolesAllowed({"etudiant","enseignant"})
+    public Sessions getSessions(){
+        String cip = this.securityContext.getUserPrincipal().getName();
+        List<SessionAndRole> SessionAndRoles = sessionMapper.getAllUserSessions(cip);
 
-        return classes;
+        //Put back in a readable object
+        Sessions sessionUser = new Sessions();
+        for (var sessionAndRole:
+             SessionAndRoles) {
+            if (sessionAndRole.rolename.equals("Etudiant")){
+                sessionUser.Etudiant.add(sessionAndRole.sessionnom);
+            }else if(sessionAndRole.rolename.equals("Enseignant")){
+                sessionUser.Enseignant.add(sessionAndRole.sessionnom);
+            }
+        }
+        return sessionUser;
     }
 }
