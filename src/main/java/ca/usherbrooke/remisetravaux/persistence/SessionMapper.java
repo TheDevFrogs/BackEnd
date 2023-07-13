@@ -5,6 +5,10 @@ import ca.usherbrooke.remisetravaux.business.session.Teacher;
 import ca.usherbrooke.remisetravaux.business.userinfo.SessionAndRole;
 import ca.usherbrooke.remisetravaux.business.session.SessionClass;
 import org.apache.ibatis.annotations.*;
+import ca.usherbrooke.remisetravaux.dto.Sessions;
+import ca.usherbrooke.remisetravaux.dto.Assignment;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
 
 import java.util.Date;
 import java.util.List;
@@ -67,4 +71,11 @@ public interface SessionMapper {
             "INNER JOIN member as m on m.cip = gm.cip " +
             "WHERE g.id_group = #{id_group} and gm.id_role = 2")
     List<Teacher> getGroupTeachers(@Param("id_group") int id_group);
+    
+    @Select("SELECT id_assignment, assignmentname, description, due_date, close_date, available_date, id_group" +
+            "FROM  studentclass AS sc" +
+            "where sc.cip = #{cip} and" +
+            "      sc.id_assignment = #{AssignmentID} and" +
+            "      sc.session = #{SessionID};")
+    Assignment getAssignment(String cip, String AssignmentID, String SessionID);
 }

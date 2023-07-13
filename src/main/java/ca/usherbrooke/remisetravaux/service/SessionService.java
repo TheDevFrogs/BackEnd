@@ -3,7 +3,10 @@ package ca.usherbrooke.remisetravaux.service;
 import ca.usherbrooke.remisetravaux.business.userinfo.SessionAndRole;
 import ca.usherbrooke.remisetravaux.business.session.SessionClass;
 import ca.usherbrooke.remisetravaux.dto.Sessions;
+import ca.usherbrooke.remisetravaux.dto.Assignment;
 import ca.usherbrooke.remisetravaux.persistence.SessionMapper;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -27,9 +30,9 @@ public class SessionService {
 
     @GET
     @Path("/sessions")
-    @RolesAllowed({"etudiant","enseignant"})
+    //@RolesAllowed({"etudiant","enseignant"})
     public Sessions getSessions(){
-        String cip = this.securityContext.getUserPrincipal().getName();
+        String cip = "bils2704"; //this.securityContext.getUserPrincipal().getName();
         List<SessionAndRole> SessionAndRoles = sessionMapper.getAllUserSessions(cip);
 
         //Put back in a readable object
@@ -55,5 +58,16 @@ public class SessionService {
         String cip = this.securityContext.getUserPrincipal().getName();
         List<SessionClass> classes =  sessionMapper.getAllUserClass(cip,sessionId,roleId);
         return classes;
+    }
+    
+    @GET
+    @Path("/sessions/{SessionID}/{AssignmentID}")
+    //@RolesAllowed({"etudiant","enseignant"})
+    public Assignment getAssignment(@PathParam("SessionID") String SessionID, @PathParam("AssignmentID") String AssignmentID){
+    //    String cip = this.securityContext.getUserPrincipal().getName();
+        String cip;
+        cip = "bils2704";
+        Assignment assignment = sessionMapper.getAssignment(cip, AssignmentID, SessionID);
+        return assignment;
     }
 }
