@@ -32,9 +32,9 @@ public class SessionService {
 
     @GET
     @Path("/sessions")
-    @RolesAllowed({"etudiant","enseignant"})
+    //@RolesAllowed({"etudiant","enseignant"})
     public Sessions getSessions(){
-        String cip = this.securityContext.getUserPrincipal().getName();
+        String cip = "bils2704"; //this.securityContext.getUserPrincipal().getName();
         List<SessionAndRole> SessionAndRoles = sessionMapper.getAllUserSessions(cip);
 
         //Put back in a readable object
@@ -52,9 +52,11 @@ public class SessionService {
 
     @GET
     @Path("/sessions/{SessionID}/{AssignmentID}")
-    @RolesAllowed({"etudiant","enseignant"})
+    //@RolesAllowed({"etudiant","enseignant"})
     public Assignment getAssignment(@PathParam("SessionID") String SessionID, @PathParam("AssignmentID") String AssignmentID){
-        String cip = this.securityContext.getUserPrincipal().getName();
+    //    String cip = this.securityContext.getUserPrincipal().getName();
+        String cip;
+        cip = "bils2704";
         Assignment assignment = sessionMapper.getAssignment(cip, AssignmentID, SessionID);
         return assignment;
     }
