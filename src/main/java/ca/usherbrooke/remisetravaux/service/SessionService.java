@@ -2,6 +2,7 @@ package ca.usherbrooke.remisetravaux.service;
 
 import ca.usherbrooke.remisetravaux.business.userinfo.SessionAndRole;
 import ca.usherbrooke.remisetravaux.business.session.SessionClass;
+import ca.usherbrooke.remisetravaux.dto.Session;
 import ca.usherbrooke.remisetravaux.dto.Sessions;
 import ca.usherbrooke.remisetravaux.dto.Assignment;
 import ca.usherbrooke.remisetravaux.persistence.SessionMapper;
@@ -40,9 +41,10 @@ public class SessionService {
         for (var sessionAndRole:
              SessionAndRoles) {
             if (sessionAndRole.rolename.equals("Etudiant")){
-                sessionUser.Etudiant.add(sessionAndRole.sessionnom);
+
+                sessionUser.Etudiant.add(new Session(sessionAndRole.sessionnom, sessionAndRole.id_session));
             }else if(sessionAndRole.rolename.equals("Enseignant")){
-                sessionUser.Enseignant.add(sessionAndRole.sessionnom);
+                sessionUser.Enseignant.add(new Session(sessionAndRole.sessionnom, sessionAndRole.id_session));
             }
         }
         return sessionUser;

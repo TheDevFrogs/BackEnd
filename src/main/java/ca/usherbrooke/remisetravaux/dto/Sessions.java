@@ -8,6 +8,6 @@ public class Sessions {
         Etudiant = new ArrayList<>();
         Enseignant = new ArrayList<>();
     }
-    public List<String> Etudiant;
-    public List<String> Enseignant;
+    public List<Session> Etudiant;
+    public List<Session> Enseignant;
 }
