@@ -1,5 +1,7 @@
 package ca.usherbrooke.remisetravaux.business;
 
+import ca.usherbrooke.remisetravaux.dto.Assignment;
+
 import java.util.List;
 
 public class Team {

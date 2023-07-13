@@ -3,7 +3,10 @@ package ca.usherbrooke.remisetravaux.service;
 import ca.usherbrooke.remisetravaux.business.Classes;
 import ca.usherbrooke.remisetravaux.business.userinfo.SessionAndRole;
 import ca.usherbrooke.remisetravaux.dto.Sessions;
+import ca.usherbrooke.remisetravaux.dto.Assignment;
 import ca.usherbrooke.remisetravaux.persistence.SessionMapper;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -45,5 +48,14 @@ public class SessionService {
             }
         }
         return sessionUser;
+    }
+
+    @GET
+    @Path("/sessions/{SessionID}/{AssignmentID}")
+    @RolesAllowed({"etudiant","enseignant"})
+    public Assignment getAssignment(@PathParam("SessionID") String SessionID, @PathParam("AssignmentID") String AssignmentID){
+        String cip = this.securityContext.getUserPrincipal().getName();
+        Assignment assignment = sessionMapper.getAssignment(cip, AssignmentID, SessionID);
+        return assignment;
     }
 }
