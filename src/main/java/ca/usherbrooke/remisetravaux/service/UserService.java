@@ -3,6 +3,8 @@ package ca.usherbrooke.remisetravaux.service;
 
 import ca.usherbrooke.remisetravaux.dto.User;
 import org.eclipse.microprofile.jwt.JsonWebToken;
+
+import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -28,11 +30,9 @@ public class UserService {
     @Context
     public User getUserName(){
         User user = new User();
-
         user.cip = securityContext.getUserPrincipal().getName();
         user.lastName = this.jwt.getClaim("family_name");
         user.firstName = this.jwt.getClaim("given_name");
         return user;
     }
-
 }

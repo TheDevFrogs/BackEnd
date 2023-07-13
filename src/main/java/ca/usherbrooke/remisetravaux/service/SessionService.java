@@ -1,7 +1,7 @@
 package ca.usherbrooke.remisetravaux.service;
 
-import ca.usherbrooke.remisetravaux.business.Classes;
 import ca.usherbrooke.remisetravaux.business.userinfo.SessionAndRole;
+import ca.usherbrooke.remisetravaux.business.session.SessionClass;
 import ca.usherbrooke.remisetravaux.dto.Sessions;
 import ca.usherbrooke.remisetravaux.persistence.SessionMapper;
 
@@ -12,8 +12,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
-import java.security.PublicKey;
-import java.util.ArrayList;
 import java.util.List;
 
 @Path("/session")
@@ -45,5 +43,17 @@ public class SessionService {
             }
         }
         return sessionUser;
+    }
+
+    @GET
+    @Path("/classes/{sessionId}/{roleId}")
+    @RolesAllowed({"etudiant","enseignant"})
+    public List<SessionClass> getAllStudentClasses(
+            @PathParam("sessionId") int sessionId,
+            @PathParam("roleId") int roleId
+    ){
+        String cip = this.securityContext.getUserPrincipal().getName();
+        List<SessionClass> classes =  sessionMapper.getAllUserClass(cip,sessionId,roleId);
+        return classes;
     }
 }
