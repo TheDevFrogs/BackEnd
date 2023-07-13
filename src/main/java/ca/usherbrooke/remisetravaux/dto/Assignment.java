@@ -1,13 +1,6 @@
 package ca.usherbrooke.remisetravaux.dto;
 
-import ca.usherbrooke.remisetravaux.business.File;
-import ca.usherbrooke.remisetravaux.business.Group;
-import ca.usherbrooke.remisetravaux.business.Team;
-
-import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 public class Assignment {
     public int id_assignment;
