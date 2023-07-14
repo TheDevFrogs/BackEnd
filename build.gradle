@@ -21,6 +21,7 @@ dependencies {
     implementation 'io.quarkiverse.mybatis:quarkus-mybatis:1.0.3'
     implementation 'io.quarkus:quarkus-jdbc-postgresql'
     implementation 'io.quarkus:quarkus-resteasy-multipart'
+    implementation 'com.github.mvallim:java-fluent-validator:1.10.0'
 }
 
 version = '1.0.0'

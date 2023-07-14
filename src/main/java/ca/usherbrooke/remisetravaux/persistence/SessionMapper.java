@@ -1,11 +1,10 @@
 package ca.usherbrooke.remisetravaux.persistence;
 
-import ca.usherbrooke.remisetravaux.business.session.Assigment;
+import ca.usherbrooke.remisetravaux.business.session.AssigmentPreview;
 import ca.usherbrooke.remisetravaux.business.session.Teacher;
 import ca.usherbrooke.remisetravaux.business.userinfo.SessionAndRole;
 import ca.usherbrooke.remisetravaux.business.session.SessionClass;
 import org.apache.ibatis.annotations.*;
-import ca.usherbrooke.remisetravaux.dto.Sessions;
 import ca.usherbrooke.remisetravaux.dto.Assignment;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
@@ -63,7 +62,7 @@ public interface SessionMapper {
             "    fetch first 1 rows only " +
             ") AS handedAssigment on handedAssigment.id_assignment = a.id_assignment " +
             "WHERE a.id_group = #{group_id};")
-    List<Assigment> getStudentAssignmentPreview(@Param("group_id") int group_id, @Param("student_cip") String student_cip);
+    List<AssigmentPreview> getStudentAssignmentPreview(@Param("group_id") int group_id, @Param("student_cip") String student_cip);
 
     @Select("SELECT m.cip as cip, m.first_name, m.last_name " +
             "FROM groupe as g " +
