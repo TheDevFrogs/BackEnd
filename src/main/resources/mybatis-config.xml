@@ -1,0 +1,25 @@
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+    <typeHandlers>
+        <package name="io.quarkiverse.it.mybatis"/>
+    </typeHandlers>
+
+    <!-- setup environment with Quarkus data source -->
+    <environments default="development">
+        <environment id="development">
+            <transactionManager type="JDBC">
+                <property name="JDBC.autoCommit" value="false" />
+            </transactionManager>
+            <dataSource type="QUARKUS">
+                <property name="db" value="h2"/>
+            </dataSource>
+        </environment>
+    </environments>
+
+    <mappers>
+        <package name="io.quarkiverse.it.mybatis"/>
+    </mappers>
+</configuration>

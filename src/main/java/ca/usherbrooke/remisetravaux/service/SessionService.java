@@ -22,7 +22,7 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class SessionService {
-    @Inject
+    //@Inject
     SessionMapper sessionMapper;
 
     //Permet de faire des requete SQL voir les requetes dans le fichiers SessionMapper.xml dans ressources
