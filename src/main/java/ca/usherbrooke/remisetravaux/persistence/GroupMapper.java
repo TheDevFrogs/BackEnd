@@ -3,15 +3,14 @@ package ca.usherbrooke.remisetravaux.persistence;
 import ca.usherbrooke.remisetravaux.business.userinfo.SessionAndRole;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
-
-import java.util.List;
-
 @Mapper
 public interface GroupMapper {
-    @Insert("SELECT sr.sessionnom,sr.id_session, sr.rolename, sr.id_role"+
-            " FROM sessionrole as sr" +
-            " WHERE sr.cip = #{id}")
-    List<SessionAndRole> getAllUserSessions(String id);
+
+    @Select("SELECT COALESCE( " +
+            "    (SELECT 1 from groupmember " +
+            "    WHERE id_role = 2 AND cip = #{cip} AND id_group = #{group_id}),0);")
+    boolean isGroupTeacher(@Param("cip") String cip,@Param("group_id") int group_id);
 
 }

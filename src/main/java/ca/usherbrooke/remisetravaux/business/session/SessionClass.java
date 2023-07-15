@@ -8,5 +8,5 @@ public class SessionClass {
     public String classTag;
     public int no_group;
     public List<Teacher> teachers;
-    public List<Assigment> assigments;
+    public List<AssigmentPreview> assigments;
 }

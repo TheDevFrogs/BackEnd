@@ -22,7 +22,7 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class SessionService {
-    @Inject
+    //@Inject
     SessionMapper sessionMapper;
 
     //Permet de faire des requete SQL voir les requetes dans le fichiers SessionMapper.xml dans ressources
@@ -31,9 +31,9 @@ public class SessionService {
 
     @GET
     @Path("/sessions")
-    //@RolesAllowed({"etudiant","enseignant"})
+    @RolesAllowed({"etudiant","enseignant"})
     public Sessions getSessions(){
-        String cip = "bils2704"; //this.securityContext.getUserPrincipal().getName();
+        String cip = this.securityContext.getUserPrincipal().getName();
         List<SessionAndRole> SessionAndRoles = sessionMapper.getAllUserSessions(cip);
 
         //Put back in a readable object

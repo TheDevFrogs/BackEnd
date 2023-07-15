@@ -1,11 +1,10 @@
 package ca.usherbrooke.remisetravaux.business.session;
-import java.time.LocalDateTime;
 import java.util.Date;
 
-public class Assigment {
+public class AssigmentPreview {
     //We pass the element in the assignment to set the status to the correct one
     //It is way easier to do it in java than in sql
-    public Assigment(Date available_date, Date due_date, Date close_date, Date first_handed_work){
+    public AssigmentPreview(Date available_date, Date due_date, Date close_date, Date first_handed_work){
 
         if (available_date.after(new Date()))
             status = "scheduled";
