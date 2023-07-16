@@ -6,7 +6,7 @@ import java.nio.file.Paths;
 
 public class LocalFileWriter implements FileDataAccess {
 
-    private static final String initialPath = "/home/matla/Documents/TestYo/";
+    private static final String initialPath = "Storage/";
 
     @Override
     public void WriteFile(String filePath, String fileName, byte[] data) throws IOException {
