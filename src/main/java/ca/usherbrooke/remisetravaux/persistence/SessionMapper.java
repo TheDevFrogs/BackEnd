@@ -1,11 +1,8 @@
 package ca.usherbrooke.remisetravaux.persistence;
 
-import ca.usherbrooke.remisetravaux.business.session.AssigmentPreview;
-import ca.usherbrooke.remisetravaux.business.session.Teacher;
+import ca.usherbrooke.remisetravaux.business.session.*;
 import ca.usherbrooke.remisetravaux.business.userinfo.SessionAndRole;
-import ca.usherbrooke.remisetravaux.business.session.SessionClass;
 import org.apache.ibatis.annotations.*;
-import ca.usherbrooke.remisetravaux.dto.Assignment;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
@@ -35,9 +32,9 @@ public interface SessionMapper {
             "            FROM groupmember as gm" +
             "        INNER JOIN groupe as g on g.id_group = gm.id_group" +
             "        inner join class c on g.id_class = c.id_class" +
-            "        WHERE g.id_session = #{sessionId} AND gm.id_role = #{roleId} AND cip = #{cip}" +
+            "        WHERE g.id_session = #{sessionId} AND gm.id_role = 1 AND cip = #{cip}" +
             "        ) as sg on sg.id_class = c.id_class;")
-    List<SessionClass> getAllUserClass(@Param("cip") String cip,@Param("sessionId") int sessionId,@Param("roleId") int roleId);
+    List<StudentSessionClass> getAllStudentClasses(@Param("cip") String cip, @Param("sessionId") int sessionId);
 
     @Results({
             @Result(property = "id_assignment", column = "id_assignment"),
@@ -62,7 +59,7 @@ public interface SessionMapper {
             "    fetch first 1 rows only " +
             ") AS handedAssigment on handedAssigment.id_assignment = a.id_assignment " +
             "WHERE a.id_group = #{group_id};")
-    List<AssigmentPreview> getStudentAssignmentPreview(@Param("group_id") int group_id, @Param("student_cip") String student_cip);
+    List<StudentAssigmentPreview> getStudentAssignmentPreview(@Param("group_id") int group_id, @Param("student_cip") String student_cip);
 
     @Select("SELECT m.cip as cip, m.first_name, m.last_name " +
             "FROM groupe as g " +
@@ -70,11 +67,30 @@ public interface SessionMapper {
             "INNER JOIN member as m on m.cip = gm.cip " +
             "WHERE g.id_group = #{id_group} and gm.id_role = 2")
     List<Teacher> getGroupTeachers(@Param("id_group") int id_group);
-    
-    @Select("SELECT id_assignment, assignmentname, description, due_date, close_date, available_date, id_group" +
-            "FROM  studentclass AS sc" +
-            "where sc.cip = #{cip} and" +
-            "      sc.id_assignment = #{AssignmentID} and" +
-            "      sc.session = #{SessionID};")
-    Assignment getAssignment(String cip, String AssignmentID, String SessionID);
+
+    @Results({
+            @Result(property = "id_group", column = "id_group"),
+            @Result(property = "name", column = "name"),
+            @Result(property = "classTag", column = "classTag"),
+            @Result(property = "no_group", column = "no_group"),
+            @Result(property = "teachers", column = "id_group", many = @Many(select = "getGroupTeachers")),
+            @Result(property = "assigments", column = "id_group", many = @Many(select = "getTeacherAssignmentPreview"))
+    })
+    @Select("SELECT sg.id_group as id_group, sg.description as name, sg.id_class as classTag," +
+            "               sg.no_group as no_group, #{cip} as teacher_cip" +
+            "        FROM class as c" +
+            "        INNER JOIN (" +
+            "            SELECT g.id_group, g.id_class, c.description, g.no_group" +
+            "            FROM groupmember as gm" +
+            "        INNER JOIN groupe as g on g.id_group = gm.id_group" +
+            "        inner join class c on g.id_class = c.id_class" +
+            "        WHERE g.id_session = #{sessionId} AND gm.id_role = 2 AND cip = #{cip}" +
+            "        ) as sg on sg.id_class = c.id_class;")
+    List<TeacherSessionClass> getAllTeacherClasses(@Param("cip") String cip, @Param("sessionId") int sessionId);
+
+
+    @Select("SELECT a.id_assignment as id_assignment, a.name as name, a.due_date as due_date " +
+            "FROM assignment as a " +
+            "WHERE id_group = #{group_id}")
+    List<TeacherAssignmentPreview> getTeacherAssignmentPreview(@Param("group_id") int group_id);
 }

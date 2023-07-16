@@ -12,6 +12,7 @@ public class Assignment {
     public Date close_date;
     public Date available_date;
     public int team_size;
+    public Integer id_file = null;
 
     public void setdefaultValues(){
         //AvailableDate 168h

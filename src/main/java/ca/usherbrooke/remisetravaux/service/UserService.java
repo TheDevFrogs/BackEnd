@@ -24,11 +24,12 @@ public class UserService {
     SecurityContext securityContext;
     @Inject
     JsonWebToken jwt;
+
     @GET
     @Path("information")
-    @RolesAllowed({"etudiant","enseignant"})
+    //@RolesAllowed({"etudiant","enseignant"})
     @Context
-    public User getUserName(){
+    public User getUserName() {
         User user = new User();
         user.cip = securityContext.getUserPrincipal().getName();
         user.lastName = this.jwt.getClaim("family_name");

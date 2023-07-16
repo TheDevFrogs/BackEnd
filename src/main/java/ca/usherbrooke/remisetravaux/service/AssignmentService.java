@@ -2,8 +2,8 @@ package ca.usherbrooke.remisetravaux.service;
 
 import br.com.fluentvalidator.context.ValidationResult;
 import ca.usherbrooke.remisetravaux.business.Assignment;
-import ca.usherbrooke.remisetravaux.business.AssignmentFile;
 import ca.usherbrooke.remisetravaux.business.DatabaseFile;
+import ca.usherbrooke.remisetravaux.business.HandedAssignment;
 import ca.usherbrooke.remisetravaux.files.FileDataAccess;
 import ca.usherbrooke.remisetravaux.files.LocalFileWriter;
 import ca.usherbrooke.remisetravaux.persistence.FileMapper;
@@ -15,16 +15,14 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.jboss.resteasy.plugins.providers.multipart.InputPart;
 import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
+import ca.usherbrooke.remisetravaux.dto.assignment.SudentAssignmentPage;
 import ca.usherbrooke.remisetravaux.persistence.AssignmentMapper;
 
-import java.io.File;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.transaction.Transactional;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -39,22 +37,23 @@ import java.util.Map;
 @Path("/assignment")
 public class AssignmentService {
 
-
-
     @Context
     SecurityContext securityContext;
     @Inject
     SqlSessionFactory sqlSessionFactory;
 
+    @Inject
+    AssignmentMapper assignmentMapper;
+
     @POST
     @Path("/create")
-    @RolesAllowed({"etudiant","enseignant"})
+    //@RolesAllowed({"etudiant","enseignant"})
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     @Transactional
     public Assignment createAssignment(MultipartFormDataInput input) {
 
-        String cip = this.securityContext.getUserPrincipal().getName();
+        String cip = "lavm2134";//this.securityContext.getUserPrincipal().getName();
         Assignment assignment = new Assignment();
         Map<String, List<InputPart>> uploadForm = input.getFormDataMap();
         byte[] fileData;
@@ -101,28 +100,25 @@ public class AssignmentService {
         try {
             assignmentMapper.addAssignment(assignment);
 
-            if (fileData.length != 0){
+            if (fileData.length != 0) {
                 //Obtenir le nom du fichier
 
                 DatabaseFile databaseFile = new DatabaseFile();
                 databaseFile.name = "handedFile.zip";
                 databaseFile.path = assignmentMapper.getAssignmentFilePath(assignment.id_assignment);
-
                 fileMapper.insertFile(databaseFile);
 
-                AssignmentFile assignmentFile = new AssignmentFile();
-                assignmentFile.id_assignment = assignment.id_assignment;
-                assignmentFile.id_file = databaseFile.id_file;
-                fileMapper.insertAssignmentFile(assignmentFile);
+                assignment.id_file = databaseFile.id_file;
+                dataAccess.WriteFile(databaseFile.path, databaseFile.name, fileData);
 
-                dataAccess.WriteFile(databaseFile.path,databaseFile.name,fileData);
+                //We need to update the assignment and add the file to it
+                assignmentMapper.updateAssignmentFile(assignment.id_assignment, databaseFile.id_file);
             }
             sqlSession.commit();
         } catch (Throwable e) {
             sqlSession.rollback(true);
             throw new WebApplicationException("Error while adding to database", 422);
-        }
-        finally {
+        } finally {
             sqlSession.close();
         }
 
@@ -148,14 +144,40 @@ public class AssignmentService {
         return IOUtils.toByteArray(inputStream);
     }
 
-    @GET
-    @Path("/assignment/{id}")
-    @PermitAll
-    public String getAssignmentInfo(MultipartFormDataInput input) {
-        Map<String, List<InputPart>> uploadForm = input.getFormDataMap();
-        List<InputPart> inputParts = uploadForm.get("file");
-        List<InputPart> teamId = uploadForm.get("team_id");
 
-        return "yo";
+    @GET
+    @Path("/studentpreview/assignmentId={assignmentId}")
+    public SudentAssignmentPage getStudentAssignmentDisplay(
+            @PathParam("assignmentId") int sessionId) {
+        return new SudentAssignmentPage();
+    }
+
+    @POST
+    @Transactional
+    @Path("/hand")
+    @RolesAllowed({"etudiant", "enseignant"})
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public HandedAssignment createHandedAssignment(MultipartFormDataInput input) {
+        return new HandedAssignment();
+    }
+
+    @POST
+    @Transactional
+    @Path("/correct/individual")
+    @RolesAllowed({"etudiant", "enseignant"})
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public HandedAssignment createIndividualCorrection(MultipartFormDataInput input) {
+        return new HandedAssignment();
+    }
+
+    @POST
+    @Transactional
+    @Path("/correct/group")
+    @RolesAllowed({"etudiant", "enseignant"})
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public HandedAssignment createGroupCorrection(MultipartFormDataInput input) {
+
+        //Voir a choisir un autre tyoe de retour
+        return new HandedAssignment();
     }
 }
