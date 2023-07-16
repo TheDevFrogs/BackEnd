@@ -129,7 +129,7 @@ public class AssignmentService {
         return assignment;
     }
 
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
     private Date fromStringToDate(String date) throws ParseException {
 
