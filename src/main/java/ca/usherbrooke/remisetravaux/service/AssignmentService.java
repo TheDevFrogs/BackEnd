@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.transaction.Transactional;
@@ -47,14 +48,13 @@ public class AssignmentService {
 
     @POST
     @Path("/create")
-    //@RolesAllowed({"etudiant","enseignant"})
-    @PermitAll
+    @RolesAllowed({"etudiant","enseignant"})
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     @Transactional
     public Assignment createAssignment(MultipartFormDataInput input) {
 
-        String cip = "lavm2134";// this.securityContext.getUserPrincipal().getName();
+        String cip = this.securityContext.getUserPrincipal().getName();
         Assignment assignment = new Assignment();
         Map<String, List<InputPart>> uploadForm = input.getFormDataMap();
         byte[] fileData;

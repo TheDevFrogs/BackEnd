@@ -32,7 +32,6 @@ public class SessionService {
     @GET
     @Path("/sessions")
     @RolesAllowed({"etudiant","enseignant"})
-    @PermitAll
     public Sessions getSessions(){
         String cip = this.securityContext.getUserPrincipal().getName();
         List<SessionAndRole> SessionAndRoles = sessionMapper.getAllUserSessions(cip);
