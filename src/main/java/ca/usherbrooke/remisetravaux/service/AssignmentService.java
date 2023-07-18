@@ -254,13 +254,13 @@ public class AssignmentService {
 
     @POST
     @Path("/update")
-    //@RolesAllowed({"etudiant", "enseignant"})
+    @RolesAllowed({"etudiant", "enseignant"})
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     @Transactional
     public Assignment updateAssignment(MultipartFormDataInput input) {
 
-        String cip = "lavm2134";// this.securityContext.getUserPrincipal().getName();
+        String cip = this.securityContext.getUserPrincipal().getName();
 
         SqlSession sqlSession = sqlSessionFactory.openSession(false);
         AssignmentMapper assignmentmapper = sqlSession.getMapper(AssignmentMapper.class);
