@@ -1,5 +1,7 @@
 package ca.usherbrooke.remisetravaux.persistence;
 
+import ca.usherbrooke.remisetravaux.business.Team;
+import ca.usherbrooke.remisetravaux.business.TeamMember;
 import ca.usherbrooke.remisetravaux.business.session.Teacher;
 import org.apache.ibatis.annotations.*;
 
@@ -7,6 +9,19 @@ import java.util.List;
 
 @Mapper
 public interface TeamMapper {
-    @Select("SELECT team")
-    int getTeamId(@Param("id_assignment") int id_assignment, @Param("cip") String cip);
+    @Select("SELECT t.id_team, t.id_assignment, t.no_equipe " +
+            "from team as t " +
+            "INNER JOIN teammember as tm on t.id_team = tm.id_team " +
+            "WHERE cip = #{cip} AND t.id_assignment = #{id_assignment}")
+    Team getStudentTeam(@Param("id_assignment") int id_assignment, @Param("cip") String cip);
+
+    @Insert("INSERT INTO team (ID_ASSIGNMENT) " +
+            "VALUES (#{team.id_assignment})")
+    @Options(useGeneratedKeys = true, keyProperty = "id_team", keyColumn = "id_team")
+    void insertTeam(@Param("team") Team team);
+
+
+    @Insert("INSERT INTO teammember (cip, id_team) " +
+            "VALUES (#{teamMember.cip}, #{teamMember.id_team})")
+    void insertTeamMember(@Param("teamMember") TeamMember teamMember);
 }

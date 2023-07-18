@@ -1,6 +1,5 @@
 package ca.usherbrooke.remisetravaux.service;
 
-
 import ca.usherbrooke.remisetravaux.dto.User;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 

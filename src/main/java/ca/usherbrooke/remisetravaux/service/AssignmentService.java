@@ -1,13 +1,13 @@
 package ca.usherbrooke.remisetravaux.service;
 
 import br.com.fluentvalidator.context.ValidationResult;
-import ca.usherbrooke.remisetravaux.business.Assignment;
-import ca.usherbrooke.remisetravaux.business.DatabaseFile;
-import ca.usherbrooke.remisetravaux.business.HandedAssignment;
+import ca.usherbrooke.remisetravaux.business.*;
 import ca.usherbrooke.remisetravaux.files.FileDataAccess;
 import ca.usherbrooke.remisetravaux.files.LocalFileWriter;
 import ca.usherbrooke.remisetravaux.persistence.FileMapper;
 import ca.usherbrooke.remisetravaux.persistence.GroupMapper;
+import ca.usherbrooke.remisetravaux.persistence.HandedAssignmentMapper;
+import ca.usherbrooke.remisetravaux.persistence.TeamMapper;
 import ca.usherbrooke.remisetravaux.validator.AssignmentValidator;
 import org.apache.commons.io.IOUtils;
 import org.apache.ibatis.session.Configuration;
@@ -18,6 +18,7 @@ import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
 import ca.usherbrooke.remisetravaux.dto.assignment.StudentAssignmentPage;
 import ca.usherbrooke.remisetravaux.persistence.AssignmentMapper;
 
+import java.io.File;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -47,7 +48,7 @@ public class AssignmentService {
 
     @POST
     @Path("/create")
-    @RolesAllowed({"etudiant","enseignant"})
+    @RolesAllowed({"etudiant", "enseignant"})
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     @Transactional
@@ -144,7 +145,6 @@ public class AssignmentService {
         return IOUtils.toByteArray(inputStream);
     }
 
-
     @GET
     @RolesAllowed({"etudiant", "enseignant"})
     @Produces(MediaType.APPLICATION_JSON)
@@ -155,7 +155,7 @@ public class AssignmentService {
         String cip = this.securityContext.getUserPrincipal().getName();
 
         if (!assignmentMapper.isStudentOfAssingment(assignmentId, cip))
-           throw new WebApplicationException("You are not a student of this assignment", 401);
+            throw new WebApplicationException("You are not a student of this assignment", 401);
 
         StudentAssignmentPage studentAssignmentPage = assignmentMapper.geStudentAssignmentPage(assignmentId, cip);
 
@@ -168,39 +168,73 @@ public class AssignmentService {
     @RolesAllowed({"etudiant", "enseignant"})
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public HandedAssignment createHandedAssignment(MultipartFormDataInput input) {
-
+        Date currentTime = new Date();
         String cip = this.securityContext.getUserPrincipal().getName();
+
         Map<String, List<InputPart>> uploadForm = input.getFormDataMap();
         SqlSession sqlSession = sqlSessionFactory.openSession(false);
-
-        try {
-            int assignmentId = Integer.parseInt(input.getFormDataPart("assignmentId", String.class, null));
-            if (!assignmentMapper.isStudentOfAssingment(assignmentId, cip))
-                throw new WebApplicationException("You are not a student of this assignment", 401);
-
-                //Vérifier si l'étudiant est déja dans un équipe
-
-                //Si ce n'est pas le cas, créer équipe avec étudiant
-                // et l'ajouter dans teamMember
-
-                //Aller chercher le path de fichier
-
-                //Ajouter le fichier dans la bd
-
-                //Créer
-
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        List<InputPart> inputParts = uploadForm.get("file");
-
-        AssignmentMapper assignmentMapper = sqlSession.getMapper(AssignmentMapper.class);
+        TeamMapper teamMapper = sqlSession.getMapper(TeamMapper.class);
+        HandedAssignmentMapper handedAssignmentMapper = sqlSession.getMapper(HandedAssignmentMapper.class);
         FileMapper fileMapper = sqlSession.getMapper(FileMapper.class);
 
-        //TODO When teams will be added this code will have to change
+        byte[] fileData;
+        HandedAssignment handedAssignment = new HandedAssignment();
+        try {
+            int assignmentId = Integer.parseInt(input.getFormDataPart("assignmentId", String.class, null));
 
-        return new HandedAssignment();
+            if (!assignmentMapper.isStudentOfAssingment(assignmentId, cip))
+                throw new WebApplicationException("You are not a student of this assignment", 401);
+            fileData = getFileData(uploadForm.get("file").get(0));
+            if (fileData.length == 0)
+                throw new WebApplicationException("File received was empty", 400);
+            //Vérifier si l'étudiant est déja dans un équipe
+            Team team = teamMapper.getStudentTeam(assignmentId, cip);
+            //Si ce n'est pas le cas, créer équipe avec étudiant
+            // et l'ajouter dans teamMember
+            if (team == null) {
+                team = new Team();
+                team.id_assignment = assignmentId;
+                teamMapper.insertTeam(team);
+
+                TeamMember teamMember = new TeamMember();
+                teamMember.cip = cip;
+                teamMember.id_team = team.id_team;
+
+                teamMapper.insertTeamMember(teamMember);
+            }
+
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdHHmmssSS");
+            String fileName = dateFormat.format(currentTime) + "Remise";
+
+            //Aller chercher le path de fichier
+            String filePath = handedAssignmentMapper.getHandedAssignmentFilePath(team.id_team);
+            //Ajouter le fichier dans la bd
+            DatabaseFile databaseFile = new DatabaseFile();
+            databaseFile.name = fileName;
+            databaseFile.path = filePath;
+            databaseFile.extension = ".zip";
+            fileMapper.insertFile(databaseFile);
+
+
+            handedAssignment.handed_date = currentTime;
+            handedAssignment.id_file = databaseFile.id_file;
+            handedAssignment.id_team = team.id_team;
+
+            handedAssignmentMapper.insertHandedAssignment(handedAssignment);
+
+            FileDataAccess dataAccess = new LocalFileWriter();
+            dataAccess.WriteFile(databaseFile.path, databaseFile.name + databaseFile.extension, fileData);
+
+
+
+            sqlSession.commit();
+        } catch (IOException e) {
+            sqlSession.rollback();
+            throw new WebApplicationException("Error while adding to database", 422);
+        } finally {
+            sqlSession.close();
+        }
+
+        return handedAssignment;
     }
 }
