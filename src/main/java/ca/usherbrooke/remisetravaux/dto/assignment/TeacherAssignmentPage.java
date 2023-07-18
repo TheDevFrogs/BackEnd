@@ -4,7 +4,7 @@ import java.util.Date;
 import java.util.List;
 
 public class TeacherAssignmentPage {
-    public int assignment_id;
+    public int id_assignment;
     public String name;
     public String description;
     public Date available_date;

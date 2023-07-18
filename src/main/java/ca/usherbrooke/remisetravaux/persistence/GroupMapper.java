@@ -12,5 +12,4 @@ public interface GroupMapper {
             "    (SELECT 1 from groupmember " +
             "    WHERE id_role = 2 AND cip = #{cip} AND id_group = #{group_id}),0);")
     boolean isGroupTeacher(@Param("cip") String cip,@Param("group_id") int group_id);
-
 }

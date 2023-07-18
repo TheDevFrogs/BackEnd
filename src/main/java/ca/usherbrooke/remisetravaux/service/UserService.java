@@ -27,7 +27,7 @@ public class UserService {
 
     @GET
     @Path("information")
-    //@RolesAllowed({"etudiant","enseignant"})
+    @RolesAllowed({"etudiant","enseignant"})
     @Context
     public User getUserName() {
         User user = new User();

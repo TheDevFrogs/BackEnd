@@ -1,8 +1,9 @@
 package ca.usherbrooke.remisetravaux.persistence;
 
 import ca.usherbrooke.remisetravaux.business.Assignment;
-import ca.usherbrooke.remisetravaux.business.session.StudentAssigmentPreview;
+import ca.usherbrooke.remisetravaux.dto.assignment.AssignmentFile;
 import org.apache.ibatis.annotations.*;
+import ca.usherbrooke.remisetravaux.dto.assignment.StudentAssignmentPage;
 
 @Mapper
 public interface AssignmentMapper {
@@ -21,4 +22,46 @@ public interface AssignmentMapper {
             "SET id_file = #{fileId} " +
             "WHERE id_assignment = #{assignmentId};")
     void updateAssignmentFile(@Param("assignmentId") int id, @Param("fileId")  int fileId);
+
+    @Results({
+            @Result(property = "id_assignment", column = "id_assignment"),
+            @Result(property = "name", column = "name"),
+            @Result(property = "description", column = "description"),
+            @Result(property = "available_date", column = "available_date"),
+            @Result(property = "due_date", column = "due_date"),
+            @Result(property = "close_date", column = "close_date"),
+            @Result(property = "file.file_id", column = "id_file"),
+            @Result(property = "file.file_name", column = "file_name"),
+            @Result(property = "handed_work_files", column = "{id_assignment=id_assignment,cip=cip}", many = @Many(select = "getHandedWorkFile")),
+            @Result(property = "corrected_work_files", column = "{id_assignment=id_assignment,cip=cip}", many = @Many(select = "getCorrectedWorkFile"))
+    })
+    @Select("SELECT a.id_assignment, a.name as name, a.description, a.available_date," +
+                    " a.due_date, a.close_date, f.id_file, f.name as filename, #{cip} as cip " +
+            "FROM assignment as a " +
+            "LEFT JOIN file AS F ON a.id_file = f.id_file " +
+            "WHERE a.id_assignment = #{assignmentId}")
+    StudentAssignmentPage geStudentAssignmentPage(@Param("assignmentId") int assignmentId, @Param("cip") String cip);
+
+    @Select("SELECT ha.handed_date, f.name, f.id_file " +
+            "FROM teammember as tm " +
+            "INNER JOIN team AS t on tm.id_team = t.id_team " +
+            "INNER JOIN handedassignment as ha on ha.id_team = t.id_team " +
+            "INNER JOIN file as f on f.id_file = ha.id_file " +
+            "WHERE tm.cip = #{cip} AND t.id_assignment = #{assignmentId}")
+    AssignmentFile getHandedWorkFile(@Param("assignmentId") int assignmentId, @Param("cip") String cip);
+
+    @Select("SELECT ac.corrected_date as handed_date , f.name, f.id_file " +
+            "FROM teammember as tm " +
+            "INNER JOIN team AS t on tm.id_team = t.id_team " +
+            "INNER JOIN assignmentcorrection as ac on ac.id_team = tm.id_team " +
+            "INNER JOIN file as f on f.id_file = ac.id_file " +
+            "WHERE tm.cip = #{cip} AND t.id_assignment = #{assignmentId}")
+    AssignmentFile getCorrectedWorkFile(@Param("assignmentId") int assignmentId, @Param("cip") String cip);
+
+    @Select("SELECT COALESCE( " +
+            "    (SELECT 1 " +
+            "FROM assignment as a " +
+            "INNER JOIN groupmember gm on a.id_group = gm.id_group " +
+            "WHERE a.id_assignment = #{assignmentId} and gm.cip = #{cip}),0);")
+    boolean isStudentOfAssingment(@Param("assignmentId") int assignmentId, @Param("cip") String cip);
 }

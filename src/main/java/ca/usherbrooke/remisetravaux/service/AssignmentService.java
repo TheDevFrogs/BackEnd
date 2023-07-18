@@ -15,7 +15,7 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.jboss.resteasy.plugins.providers.multipart.InputPart;
 import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
-import ca.usherbrooke.remisetravaux.dto.assignment.SudentAssignmentPage;
+import ca.usherbrooke.remisetravaux.dto.assignment.StudentAssignmentPage;
 import ca.usherbrooke.remisetravaux.persistence.AssignmentMapper;
 
 import java.io.InputStream;
@@ -47,13 +47,13 @@ public class AssignmentService {
 
     @POST
     @Path("/create")
-    //@RolesAllowed({"etudiant","enseignant"})
+    @RolesAllowed({"etudiant","enseignant"})
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     @Transactional
     public Assignment createAssignment(MultipartFormDataInput input) {
 
-        String cip = "lavm2134";//this.securityContext.getUserPrincipal().getName();
+        String cip = this.securityContext.getUserPrincipal().getName();
         Assignment assignment = new Assignment();
         Map<String, List<InputPart>> uploadForm = input.getFormDataMap();
         byte[] fileData;
@@ -85,7 +85,7 @@ public class AssignmentService {
             throw new WebApplicationException("Dates are sent in the wrong format", 400);
         }
         SqlSession sqlSession = sqlSessionFactory.openSession(false);
-        Configuration config = sqlSessionFactory.getConfiguration();
+
         AssignmentMapper assignmentMapper = sqlSession.getMapper(AssignmentMapper.class);
         FileMapper fileMapper = sqlSession.getMapper(FileMapper.class);
         GroupMapper groupMapper = sqlSession.getMapper(GroupMapper.class);
@@ -146,10 +146,20 @@ public class AssignmentService {
 
 
     @GET
+    @RolesAllowed({"etudiant", "enseignant"})
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("/studentpreview/assignmentId={assignmentId}")
-    public SudentAssignmentPage getStudentAssignmentDisplay(
-            @PathParam("assignmentId") int sessionId) {
-        return new SudentAssignmentPage();
+    public StudentAssignmentPage getStudentAssignmentDisplay(
+            @PathParam("assignmentId") int assignmentId) {
+
+        String cip = this.securityContext.getUserPrincipal().getName();
+
+        if (!assignmentMapper.isStudentOfAssingment(assignmentId, cip))
+           throw new WebApplicationException("You are not a student of this group", 401);
+
+        StudentAssignmentPage studentAssignmentPage = assignmentMapper.geStudentAssignmentPage(assignmentId, cip);
+
+        return studentAssignmentPage;
     }
 
     @POST
@@ -158,26 +168,31 @@ public class AssignmentService {
     @RolesAllowed({"etudiant", "enseignant"})
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public HandedAssignment createHandedAssignment(MultipartFormDataInput input) {
-        return new HandedAssignment();
-    }
 
-    @POST
-    @Transactional
-    @Path("/correct/individual")
-    @RolesAllowed({"etudiant", "enseignant"})
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public HandedAssignment createIndividualCorrection(MultipartFormDataInput input) {
-        return new HandedAssignment();
-    }
+        String cip = this.securityContext.getUserPrincipal().getName();
+        Map<String, List<InputPart>> uploadForm = input.getFormDataMap();
+        SqlSession sqlSession = sqlSessionFactory.openSession(false);
 
-    @POST
-    @Transactional
-    @Path("/correct/group")
-    @RolesAllowed({"etudiant", "enseignant"})
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public HandedAssignment createGroupCorrection(MultipartFormDataInput input) {
+        try {
+            int assignmentId = Integer.parseInt(input.getFormDataPart("assignmentId", String.class, null));
+            if (!assignmentMapper.isStudentOfAssingment(assignmentId, cip))
+                throw new WebApplicationException("You are not a student of this assignment", 401);
 
-        //Voir a choisir un autre tyoe de retour
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        List<InputPart> inputParts = uploadForm.get("file");
+
+
+
+
+        AssignmentMapper assignmentMapper = sqlSession.getMapper(AssignmentMapper.class);
+        FileMapper fileMapper = sqlSession.getMapper(FileMapper.class);
+        GroupMapper groupMapper = sqlSession.getMapper(GroupMapper.class);
+
+        //TODO When teams will be added this code will have to change
+
         return new HandedAssignment();
     }
 }
