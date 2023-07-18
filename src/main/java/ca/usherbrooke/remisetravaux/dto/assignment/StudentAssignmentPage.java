@@ -14,7 +14,7 @@ public class StudentAssignmentPage {
     public Date due_date;
     public Date close_date;
 
-    public DisplayedFile file;
+    public DisplayedFile file = new DisplayedFile();
     //Coupure de fonctionalite les team members nsont mis en stannd by
     //public List<User> teamMember;
 

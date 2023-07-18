@@ -7,7 +7,7 @@ import org.apache.ibatis.annotations.*;
 public interface HandedAssignmentMapper {
     @Select("SELECT CONCAT(g.id_session, '/',g.id_class,'/',no_group,'/',a.id_assignment,'/remises/',t.no_equipe,'/') as filePath " +
             "FROM team as t " +
-            "INNER JOIN assignment a on a.id_assignment = t.id_assignment " +
+            "INNER JOIN AvailableAssignment a on a.id_assignment = t.id_assignment " +
             "INNER JOIN groupe AS g ON g.id_group = a.id_group " +
             "WHERE id_team = #{teamId} ")
     String getHandedAssignmentFilePath(@Param("teamId") int teamId);

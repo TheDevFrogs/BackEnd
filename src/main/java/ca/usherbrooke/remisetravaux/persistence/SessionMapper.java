@@ -48,7 +48,7 @@ public interface SessionMapper {
     })
     @Select("SELECT a.id_assignment as id_assignment, a.name as name ,a.available_date as available_date, a.due_date as due_date, " +
             "       a.close_date as close_date, handedAssigment.handed_date as first_handed_work " +
-            "FROM assignment as a " +
+            "FROM AvailableAssignment as a " +
             "LEFT JOIN( " +
             "    SELECT t.id_assignment, h.handed_date " +
             "    FROM teammember as tm " +
@@ -90,7 +90,7 @@ public interface SessionMapper {
 
 
     @Select("SELECT a.id_assignment as id_assignment, a.name as name, a.due_date as due_date " +
-            "FROM assignment as a " +
+            "FROM AvailableAssignment as a " +
             "WHERE id_group = #{group_id}")
     List<TeacherAssignmentPreview> getTeacherAssignmentPreview(@Param("group_id") int group_id);
 }

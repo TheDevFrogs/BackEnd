@@ -2,6 +2,7 @@ package ca.usherbrooke.remisetravaux.service;
 
 import br.com.fluentvalidator.context.ValidationResult;
 import ca.usherbrooke.remisetravaux.business.*;
+import ca.usherbrooke.remisetravaux.dto.assignment.TeacherAssignmentPage;
 import ca.usherbrooke.remisetravaux.files.FileDataAccess;
 import ca.usherbrooke.remisetravaux.files.LocalFileWriter;
 import ca.usherbrooke.remisetravaux.persistence.FileMapper;
@@ -87,7 +88,7 @@ public class AssignmentService {
         }
         SqlSession sqlSession = sqlSessionFactory.openSession(false);
 
-        AssignmentMapper assignmentMapper = sqlSession.getMapper(AssignmentMapper.class);
+        AssignmentMapper assignmentmapper = sqlSession.getMapper(AssignmentMapper.class);
         FileMapper fileMapper = sqlSession.getMapper(FileMapper.class);
         GroupMapper groupMapper = sqlSession.getMapper(GroupMapper.class);
 
@@ -99,21 +100,21 @@ public class AssignmentService {
 
         FileDataAccess dataAccess = new LocalFileWriter();
         try {
-            assignmentMapper.addAssignment(assignment);
+            assignmentmapper.addAssignment(assignment);
 
             if (fileData.length != 0) {
                 //Obtenir le nom du fichier
 
                 DatabaseFile databaseFile = new DatabaseFile();
                 databaseFile.name = "handedFile.zip";
-                databaseFile.path = assignmentMapper.getAssignmentFilePath(assignment.id_assignment);
+                databaseFile.path = assignmentmapper.getAssignmentFilePath(assignment.id_assignment);
                 fileMapper.insertFile(databaseFile);
 
                 assignment.id_file = databaseFile.id_file;
                 dataAccess.WriteFile(databaseFile.path, databaseFile.name, fileData);
 
                 //We need to update the assignment and add the file to it
-                assignmentMapper.updateAssignmentFile(assignment.id_assignment, databaseFile.id_file);
+                assignmentmapper.updateAssignmentFile(assignment.id_assignment, databaseFile.id_file);
             }
             sqlSession.commit();
         } catch (Throwable e) {
@@ -149,8 +150,7 @@ public class AssignmentService {
     @RolesAllowed({"etudiant", "enseignant"})
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/studentpreview/assignmentId={assignmentId}")
-    public StudentAssignmentPage getStudentAssignmentDisplay(
-            @PathParam("assignmentId") int assignmentId) {
+    public StudentAssignmentPage getStudentAssignmentDisplay(@PathParam("assignmentId") int assignmentId) {
 
         String cip = this.securityContext.getUserPrincipal().getName();
 
@@ -160,6 +160,22 @@ public class AssignmentService {
         StudentAssignmentPage studentAssignmentPage = assignmentMapper.geStudentAssignmentPage(assignmentId, cip);
 
         return studentAssignmentPage;
+    }
+
+    @GET
+    @RolesAllowed({"etudiant", "enseignant"})
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/teacherpreview/assignmentId={assignmentId}")
+    public TeacherAssignmentPage getTeacherAssignmentDisplay(@PathParam("assignmentId") int assignmentId) {
+
+        String cip = this.securityContext.getUserPrincipal().getName();
+
+        if (!assignmentMapper.isTeacherOfAssignment(assignmentId, cip))
+            throw new WebApplicationException("You are not a teacher of this group", 401);
+
+        TeacherAssignmentPage teacherAssignmentPage = assignmentMapper.getTeacherAssignmentPage(assignmentId);
+
+        return teacherAssignmentPage;
     }
 
     @POST
@@ -226,7 +242,6 @@ public class AssignmentService {
             dataAccess.WriteFile(databaseFile.path, databaseFile.name + databaseFile.extension, fileData);
 
 
-
             sqlSession.commit();
         } catch (IOException e) {
             sqlSession.rollback();
@@ -236,5 +251,20 @@ public class AssignmentService {
         }
 
         return handedAssignment;
+    }
+    @DELETE
+    @Path("/delete/assignmentId={assignmentId}")
+    @RolesAllowed({"etudiant", "enseignant"})
+    public boolean deleteAssignment(@PathParam("assignmentId") int assignmentId) {
+
+        String cip = this.securityContext.getUserPrincipal().getName();
+        //Verify is the person is a teacher in this assignment
+
+        if (!assignmentMapper.isTeacherOfAssignment(assignmentId, cip))
+            throw new WebApplicationException("You are not a teacher of this assignment", 401);
+
+        assignmentMapper.deleteAssignment(assignmentId);
+
+        return true;
     }
 }
