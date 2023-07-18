@@ -10,4 +10,10 @@ public interface FileMapper {
             "VALUES (#{f.path},#{f.name})")
     @Options(useGeneratedKeys = true, keyProperty = "id_file", keyColumn = "id_file")
     void insertFile(@Param("f") DatabaseFile file);
+
+    @Select("")
+    boolean canDownloadAssignmentFile(@Param("cip") String cip, @Param("file_id") int file_id);
+
+    @Select("")
+    DatabaseFile getFile(@Param("file_id") int file_id);
 }

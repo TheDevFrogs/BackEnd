@@ -11,13 +11,13 @@ import java.util.List;
 
 @Mapper
 public interface SessionMapper {
-    @Select("SELECT sr.sessionnom,sr.id_session, sr.rolename, sr.id_role"+
+    @Select("SELECT sr.sessionnom, sr.id_session, sr.rolename, sr.id_role"+
             " FROM sessionrole as sr" +
             " WHERE sr.cip = #{id}")
     List<SessionAndRole> getAllUserSessions(String id);
 
     @Results({
-     @Result(property = "id_group", column = "id_group"),
+            @Result(property = "id_group", column = "id_group"),
             @Result(property = "name", column = "name"),
             @Result(property = "classTag", column = "classTag"),
             @Result(property = "no_group", column = "no_group"),

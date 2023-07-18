@@ -62,6 +62,6 @@ public interface AssignmentMapper {
             "    (SELECT 1 " +
             "FROM assignment as a " +
             "INNER JOIN groupmember gm on a.id_group = gm.id_group " +
-            "WHERE a.id_assignment = #{assignmentId} and gm.cip = #{cip}),0);")
+            "WHERE a.id_assignment = #{assignmentId} and gm.cip = #{cip} and gm.id_role = 1),0);")
     boolean isStudentOfAssingment(@Param("assignmentId") int assignmentId, @Param("cip") String cip);
 }

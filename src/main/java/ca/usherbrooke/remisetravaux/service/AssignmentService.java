@@ -155,7 +155,7 @@ public class AssignmentService {
         String cip = this.securityContext.getUserPrincipal().getName();
 
         if (!assignmentMapper.isStudentOfAssingment(assignmentId, cip))
-           throw new WebApplicationException("You are not a student of this group", 401);
+           throw new WebApplicationException("You are not a student of this assignment", 401);
 
         StudentAssignmentPage studentAssignmentPage = assignmentMapper.geStudentAssignmentPage(assignmentId, cip);
 
@@ -178,18 +178,26 @@ public class AssignmentService {
             if (!assignmentMapper.isStudentOfAssingment(assignmentId, cip))
                 throw new WebApplicationException("You are not a student of this assignment", 401);
 
+                //Vérifier si l'étudiant est déja dans un équipe
+
+                //Si ce n'est pas le cas, créer équipe avec étudiant
+                // et l'ajouter dans teamMember
+
+                //Aller chercher le path de fichier
+
+                //Ajouter le fichier dans la bd
+
+                //Créer
+
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
         List<InputPart> inputParts = uploadForm.get("file");
 
-
-
-
         AssignmentMapper assignmentMapper = sqlSession.getMapper(AssignmentMapper.class);
         FileMapper fileMapper = sqlSession.getMapper(FileMapper.class);
-        GroupMapper groupMapper = sqlSession.getMapper(GroupMapper.class);
 
         //TODO When teams will be added this code will have to change
 
