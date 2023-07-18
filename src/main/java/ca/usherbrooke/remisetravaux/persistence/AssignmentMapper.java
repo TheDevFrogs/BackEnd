@@ -91,4 +91,14 @@ public interface AssignmentMapper {
             "                    INNER JOIN AvailableAssignment as a on a.id_group = gm.id_group " +
             "                WHERE gm.id_role = 2 AND gm.cip = #{cip} AND a.id_assignment = #{assignmentId}),0);")
     boolean isTeacherOfAssignment(@Param("assignmentId") int assignmentId,@Param("cip") String cip);
+
+    @Update("UPDATE assignment " +
+            "SET name = #{assignmentObject.name}," +
+            "    description = #{assignmentObject.description}," +
+            "    due_date = #{assignmentObject.due_date}," +
+            "    close_date = #{assignmentObject.close_date}," +
+            "    available_date = #{assignmentObject.available_date}," +
+            "    team_size = #{assignmentObject.team_size}" +
+            "WHERE id_assignment = #{assignmentObject.id_assignment};")
+    void updateAssignment(@Param("assignmentObject") Assignment assignment);
 }

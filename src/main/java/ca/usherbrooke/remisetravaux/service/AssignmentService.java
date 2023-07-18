@@ -267,4 +267,85 @@ public class AssignmentService {
 
         return true;
     }
+
+    @POST
+    @Path("/update")
+    @RolesAllowed({"etudiant", "enseignant"})
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Transactional
+    public Assignment updateAssignment(MultipartFormDataInput input) {
+
+        String cip = this.securityContext.getUserPrincipal().getName();
+        Assignment assignment = new Assignment();
+        Map<String, List<InputPart>> uploadForm = input.getFormDataMap();
+
+        SqlSession sqlSession = sqlSessionFactory.openSession(false);
+        AssignmentMapper assignmentmapper = sqlSession.getMapper(AssignmentMapper.class);
+        FileMapper fileMapper = sqlSession.getMapper(FileMapper.class);
+        GroupMapper groupMapper = sqlSession.getMapper(GroupMapper.class);
+        byte[] fileData;
+        try {
+            assignment.id_group = Integer.parseInt(input.getFormDataPart("group_id", String.class, null));
+
+            if (!groupMapper.isGroupTeacher(cip, assignment.id_group))
+                throw new WebApplicationException("You are not the teacher of this group", 401);
+
+            assignment.description = input.getFormDataPart("description", String.class, null);
+            assignment.name = input.getFormDataPart("name", String.class, null);
+            assignment.due_date = fromStringToDate(input.getFormDataPart("due_date", String.class, null));
+            assignment.close_date = fromStringToDate(input.getFormDataPart("close_date", String.class, null));
+            assignment.available_date = fromStringToDate(input.getFormDataPart("available_date", String.class, null));
+            assignment.setdefaultValues();
+            fileData = getFileData(uploadForm.get("file").get(0));
+
+            //TODO When the software will be ready, teachers will be able to change team sizes.
+            assignment.team_size = 1;
+            //Verify if the input is valid
+            final AssignmentValidator validator = new AssignmentValidator();
+            ValidationResult validationResult = validator.validate(assignment);
+
+            if (!validationResult.isValid())
+                throw new IOException("Invalid data format for Assignment /assignment/create");
+
+            //Get the file
+            List<InputPart> inputParts = uploadForm.get("file");
+
+        } catch (IOException ioException) {
+            throw new WebApplicationException("Some of the fields are invalid", 400);
+        } catch (ParseException e) {
+            throw new WebApplicationException("Dates are sent in the wrong format", 400);
+        }
+
+
+        try {
+        //Update Assignment
+
+
+            if (fileData.length != 0) {
+                //Obtenir le nom du fichier
+
+                DatabaseFile databaseFile = new DatabaseFile();
+                databaseFile.name = "handedFile.zip";
+                databaseFile.path = assignmentmapper.getAssignmentFilePath(assignment.id_assignment);
+                fileMapper.insertFile(databaseFile);
+
+                assignment.id_file = databaseFile.id_file;
+
+                FileDataAccess dataAccess = new LocalFileWriter();
+                dataAccess.WriteFile(databaseFile.path, databaseFile.name, fileData);
+
+                //We need to update the assignment and add the file to it
+                assignmentmapper.updateAssignmentFile(assignment.id_assignment, databaseFile.id_file);
+            }
+            sqlSession.commit();
+        } catch (Throwable e) {
+            sqlSession.rollback(true);
+            throw new WebApplicationException("Error while adding to database", 422);
+        } finally {
+            sqlSession.close();
+        }
+
+        return assignment;
+    }
 }
