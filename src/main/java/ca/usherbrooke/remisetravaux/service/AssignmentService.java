@@ -56,44 +56,34 @@ public class AssignmentService {
     public Assignment createAssignment(MultipartFormDataInput input) {
 
         String cip = this.securityContext.getUserPrincipal().getName();
-        Assignment assignment = new Assignment();
-        Map<String, List<InputPart>> uploadForm = input.getFormDataMap();
-        byte[] fileData;
-        try {
-            assignment.id_group = Integer.parseInt(input.getFormDataPart("group_id", String.class, null));
-            assignment.description = input.getFormDataPart("description", String.class, null);
-            assignment.name = input.getFormDataPart("name", String.class, null);
-            assignment.due_date = fromStringToDate(input.getFormDataPart("due_date", String.class, null));
-            assignment.close_date = fromStringToDate(input.getFormDataPart("close_date", String.class, null));
-            assignment.available_date = fromStringToDate(input.getFormDataPart("available_date", String.class, null));
-            assignment.setdefaultValues();
-            fileData = getFileData(uploadForm.get("file").get(0));
 
-            //TODO When the software will be ready, teachers will be able to change team sizes.
-            assignment.team_size = 1;
-            //Verify if the input is valid
+        SqlSession sqlSession = sqlSessionFactory.openSession(false);
+        AssignmentMapper assignmentmapper = sqlSession.getMapper(AssignmentMapper.class);
+        FileMapper fileMapper = sqlSession.getMapper(FileMapper.class);
+        GroupMapper groupMapper = sqlSession.getMapper(GroupMapper.class);
+
+        Assignment assignment;
+        byte[] fileData;
+
+        try {
+            int id_group = Integer.parseInt(input.getFormDataPart("group_id", String.class, null));
+            if (!groupMapper.isGroupTeacher(cip, id_group))
+                throw new WebApplicationException("You are not the teacher of this group", 401);
+
+            assignment = new Assignment(input);
+            assignment.id_group = id_group;
+            fileData = getFileData(input.getFormDataMap().get("file").get(0));
+
             final AssignmentValidator validator = new AssignmentValidator();
             ValidationResult validationResult = validator.validate(assignment);
-
             if (!validationResult.isValid())
-                throw new IOException("Invalid data format for Assignment /assignment/create");
-
-            //Get the file
-            List<InputPart> inputParts = uploadForm.get("file");
+                throw new IOException("Invalid data format");
 
         } catch (IOException ioException) {
             throw new WebApplicationException("Some of the fields are invalid", 400);
         } catch (ParseException e) {
             throw new WebApplicationException("Dates are sent in the wrong format", 400);
         }
-        SqlSession sqlSession = sqlSessionFactory.openSession(false);
-
-        AssignmentMapper assignmentmapper = sqlSession.getMapper(AssignmentMapper.class);
-        FileMapper fileMapper = sqlSession.getMapper(FileMapper.class);
-        GroupMapper groupMapper = sqlSession.getMapper(GroupMapper.class);
-
-        if (!groupMapper.isGroupTeacher(cip, assignment.id_group))
-            throw new WebApplicationException("You are not the teacher of this group", 401);
 
         //Pour eviter des problèmes l'ors de l'insetion, il
         //est primordial d'utiliser une session sql
@@ -106,12 +96,14 @@ public class AssignmentService {
                 //Obtenir le nom du fichier
 
                 DatabaseFile databaseFile = new DatabaseFile();
-                databaseFile.name = "handedFile.zip";
+                databaseFile.name = "assignmentFile";
+                databaseFile.extension = ".zip";
+                databaseFile.displayed_name = "assignmentFile";
                 databaseFile.path = assignmentmapper.getAssignmentFilePath(assignment.id_assignment);
                 fileMapper.insertFile(databaseFile);
 
                 assignment.id_file = databaseFile.id_file;
-                dataAccess.WriteFile(databaseFile.path, databaseFile.name, fileData);
+                dataAccess.WriteFile(databaseFile, fileData);
 
                 //We need to update the assignment and add the file to it
                 assignmentmapper.updateAssignmentFile(assignment.id_assignment, databaseFile.id_file);
@@ -127,15 +119,7 @@ public class AssignmentService {
         return assignment;
     }
 
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
-    private Date fromStringToDate(String date) throws ParseException {
-
-        if (date != null && !date.isEmpty())
-            return dateFormat.parse(date);
-        else
-            return null;
-    }
 
     private byte[] getFileData(InputPart inputPart) throws IOException {
 
@@ -239,7 +223,7 @@ public class AssignmentService {
             handedAssignmentMapper.insertHandedAssignment(handedAssignment);
 
             FileDataAccess dataAccess = new LocalFileWriter();
-            dataAccess.WriteFile(databaseFile.path, databaseFile.name + databaseFile.extension, fileData);
+            dataAccess.WriteFile(databaseFile, fileData);
 
 
             sqlSession.commit();
@@ -270,48 +254,41 @@ public class AssignmentService {
 
     @POST
     @Path("/update")
-    @RolesAllowed({"etudiant", "enseignant"})
+    //@RolesAllowed({"etudiant", "enseignant"})
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     @Transactional
     public Assignment updateAssignment(MultipartFormDataInput input) {
 
-        String cip = this.securityContext.getUserPrincipal().getName();
-        Assignment assignment = new Assignment();
-        Map<String, List<InputPart>> uploadForm = input.getFormDataMap();
+        String cip = "lavm2134";// this.securityContext.getUserPrincipal().getName();
 
         SqlSession sqlSession = sqlSessionFactory.openSession(false);
         AssignmentMapper assignmentmapper = sqlSession.getMapper(AssignmentMapper.class);
         FileMapper fileMapper = sqlSession.getMapper(FileMapper.class);
         GroupMapper groupMapper = sqlSession.getMapper(GroupMapper.class);
+
+        Assignment assignment;
         byte[] fileData;
+
         try {
-            assignment.id_group = Integer.parseInt(input.getFormDataPart("group_id", String.class, null));
+            int id_assignment = Integer.parseInt(input.getFormDataPart("id_assignment", String.class, null));
+            if (!assignmentmapper.isTeacherOfAssignment(id_assignment,cip))
+                throw new WebApplicationException("You are not the teacher of this assignment", 401);
 
-            if (!groupMapper.isGroupTeacher(cip, assignment.id_group))
-                throw new WebApplicationException("You are not the teacher of this group", 401);
 
-            assignment.description = input.getFormDataPart("description", String.class, null);
-            assignment.name = input.getFormDataPart("name", String.class, null);
-            assignment.due_date = fromStringToDate(input.getFormDataPart("due_date", String.class, null));
-            assignment.close_date = fromStringToDate(input.getFormDataPart("close_date", String.class, null));
-            assignment.available_date = fromStringToDate(input.getFormDataPart("available_date", String.class, null));
-            assignment.setdefaultValues();
-            fileData = getFileData(uploadForm.get("file").get(0));
+            Assignment previousAssignment = assignmentmapper.getAssignment(id_assignment);
+            assignment = new Assignment(input);
+            assignment.id_group = previousAssignment.id_group;
+            assignment.id_assignment = id_assignment;
 
-            //TODO When the software will be ready, teachers will be able to change team sizes.
-            assignment.team_size = 1;
-            //Verify if the input is valid
+            fileData = getFileData(input.getFormDataMap().get("file").get(0));
+
             final AssignmentValidator validator = new AssignmentValidator();
             ValidationResult validationResult = validator.validate(assignment);
-
             if (!validationResult.isValid())
-                throw new IOException("Invalid data format for Assignment /assignment/create");
+                throw new IOException("Invalid data format");
 
-            //Get the file
-            List<InputPart> inputParts = uploadForm.get("file");
-
-        } catch (IOException ioException) {
+        } catch (IOException | NumberFormatException exception) {
             throw new WebApplicationException("Some of the fields are invalid", 400);
         } catch (ParseException e) {
             throw new WebApplicationException("Dates are sent in the wrong format", 400);
@@ -319,25 +296,26 @@ public class AssignmentService {
 
 
         try {
-        //Update Assignment
-
+            //Update Assignment
 
             if (fileData.length != 0) {
-                //Obtenir le nom du fichier
+                //Dans le cas ou un
+                DatabaseFile databaseFile = fileMapper.getAssignmentFile(assignment.id_assignment);
 
-                DatabaseFile databaseFile = new DatabaseFile();
-                databaseFile.name = "handedFile.zip";
-                databaseFile.path = assignmentmapper.getAssignmentFilePath(assignment.id_assignment);
-                fileMapper.insertFile(databaseFile);
-
-                assignment.id_file = databaseFile.id_file;
+                if (databaseFile == null){
+                    databaseFile.name = "assignmentFile";
+                    databaseFile.path = assignmentmapper.getAssignmentFilePath(assignment.id_assignment);
+                    databaseFile.extension = ".zip";
+                    fileMapper.insertFile(databaseFile);
+                    assignment.id_file = databaseFile.id_file;
+                }
 
                 FileDataAccess dataAccess = new LocalFileWriter();
-                dataAccess.WriteFile(databaseFile.path, databaseFile.name, fileData);
+                dataAccess.WriteFile(databaseFile, fileData);
 
                 //We need to update the assignment and add the file to it
-                assignmentmapper.updateAssignmentFile(assignment.id_assignment, databaseFile.id_file);
             }
+            assignmentMapper.updateAssignment(assignment);
             sqlSession.commit();
         } catch (Throwable e) {
             sqlSession.rollback(true);

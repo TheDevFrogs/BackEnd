@@ -98,7 +98,11 @@ public interface AssignmentMapper {
             "    due_date = #{assignmentObject.due_date}," +
             "    close_date = #{assignmentObject.close_date}," +
             "    available_date = #{assignmentObject.available_date}," +
-            "    team_size = #{assignmentObject.team_size}" +
+            "    team_size = #{assignmentObject.team_size} " +
             "WHERE id_assignment = #{assignmentObject.id_assignment};")
     void updateAssignment(@Param("assignmentObject") Assignment assignment);
+    @Select("SELECT * " +
+            "FROM assignment as a " +
+            "WHERE a.id_assignment = #{id_assignment}")
+    Assignment getAssignment(@Param("id_assignment") int assignmentId);
 }
