@@ -53,19 +53,17 @@ public class FileService {
 
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-//  @RolesAllowed({"etudiant", "enseignant"})
+    @RolesAllowed({"etudiant", "enseignant"})
     @Path("/download/assignmentfile/fileId={fileId}")
     public Response getJoinedAssignmentFile(@PathParam("fileId") int file_id){
 
-        String cip = "adwd"; //this.securityContext.getUserPrincipal().getName();
+        String cip = this.securityContext.getUserPrincipal().getName();
 
         // Verifier que l'etudiant fait partie du groupe dans lequel l'assignment est
         if(!handedAssignmentMapper.canDownloadHandedAssignmentFile(cip))
             throw new WebApplicationException("You may not download this file", 401);
-        //Lire les info du fileID
-        DatabaseFile databaseFile = fileMapper.getFile(file_id);
 
-        //Lire le fichier sur le
+        DatabaseFile databaseFile = fileMapper.getFile(file_id);
 
         FileDataAccess fileDataAccess = new LocalFileWriter();
         try {
