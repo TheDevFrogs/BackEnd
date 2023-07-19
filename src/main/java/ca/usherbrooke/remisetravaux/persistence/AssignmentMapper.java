@@ -31,13 +31,14 @@ public interface AssignmentMapper {
             @Result(property = "available_date", column = "available_date"),
             @Result(property = "due_date", column = "due_date"),
             @Result(property = "close_date", column = "close_date"),
-            @Result(property = "file.file_id", column = "id_file"),
-            @Result(property = "file.file_name", column = "file_name"),
+            @Result(property = "file.id_file", column = "id_file"),
+            @Result(property = "file.displayed_name", column = "displayed_name"),
+            @Result(property = "file.extension", column = "extension"),
             @Result(property = "handed_work_files", column = "{id_assignment=id_assignment,cip=cip}", many = @Many(select = "getHandedWorkFile")),
             @Result(property = "corrected_work_files", column = "{id_assignment=id_assignment,cip=cip}", many = @Many(select = "getCorrectedWorkFile"))
     })
     @Select("SELECT a.id_assignment, a.name as name, a.description, a.available_date," +
-                    " a.due_date, a.close_date, f.id_file, f.name as filename, #{cip} as cip " +
+                    " a.due_date, a.close_date, f.id_file, f.displayed_name, f.extension ,#{cip} as cip " +
             "FROM AvailableAssignment as a " +
             "LEFT JOIN file AS F ON a.id_file = f.id_file " +
             "WHERE a.id_assignment = #{assignmentId}")
@@ -59,21 +60,21 @@ public interface AssignmentMapper {
             "WHERE a.id_assignment = #{assignmentId}")
     TeacherAssignmentPage getTeacherAssignmentPage(@Param("assignmentId") int assignmentId);
 
-    @Select("SELECT ha.handed_date, f.name, f.id_file " +
+    @Select("SELECT ha.handed_date, f.displayed_name, f.id_file, f.extension " +
             "FROM teammember as tm " +
             "INNER JOIN team AS t on tm.id_team = t.id_team " +
             "INNER JOIN handedassignment as ha on ha.id_team = t.id_team " +
             "INNER JOIN file as f on f.id_file = ha.id_file " +
-            "WHERE tm.cip = #{cip} AND t.id_assignment = #{assignmentId}")
-    AssignmentFile getHandedWorkFile(@Param("assignmentId") int assignmentId, @Param("cip") String cip);
+            "WHERE tm.cip = #{cip} AND t.id_assignment = #{id_assignment}")
+    AssignmentFile getHandedWorkFile(@Param("id_assignment") int id_assignment, @Param("cip") String cip);
 
-    @Select("SELECT ac.corrected_date as handed_date , f.name, f.id_file " +
+    @Select("SELECT ac.corrected_date as handed_date , f.displayed_name, f.id_file, f.extension " +
             "FROM teammember as tm " +
             "INNER JOIN team AS t on tm.id_team = t.id_team " +
             "INNER JOIN assignmentcorrection as ac on ac.id_team = tm.id_team " +
             "INNER JOIN file as f on f.id_file = ac.id_file " +
-            "WHERE tm.cip = #{cip} AND t.id_assignment = #{assignmentId}")
-    AssignmentFile getCorrectedWorkFile(@Param("assignmentId") int assignmentId, @Param("cip") String cip);
+            "WHERE tm.cip = #{cip} AND t.id_assignment = #{id_assignment}")
+    AssignmentFile getCorrectedWorkFile(@Param("id_assignment") int id_assignment, @Param("cip") String cip);
 
     @Select("SELECT COALESCE( " +
             "    (SELECT 1 " +

@@ -2,5 +2,6 @@ package ca.usherbrooke.remisetravaux.dto;
 
 public class DisplayedFile {
     public int id_file;
-    public String file_name;
+    public String displayed_name;
+    public String extension;
 }
