@@ -11,8 +11,11 @@ public interface FileMapper {
     @Options(useGeneratedKeys = true, keyProperty = "id_file", keyColumn = "id_file")
     void insertFile(@Param("f") DatabaseFile file);
 
-    @Select("")
-    boolean canDownloadAssignmentFile(@Param("cip") String cip, @Param("file_id") int file_id);
+    @Select("SELECT COALESCE( " +
+            "(SELECT 1 " +
+            "FROM assignmentfileinfos " +
+            "WHERE cip = #{cip} AND id_file = #{id_file}), 0)")
+    boolean canDownloadAssignmentFile(@Param("cip") String cip, @Param("id_file") int id_file);
 
     @Select("SELECT f.id_file, f.name, f.displayed_name, f.extension, f.path " +
             "from assignment as a " +
