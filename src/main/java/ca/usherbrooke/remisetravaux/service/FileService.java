@@ -31,23 +31,27 @@ public class FileService {
     @Inject
     HandedAssignmentMapper handedAssignmentMapper;
 
-
-    //LES TYPES DE RETOUR DES MÉTHODES SERONT À CHANGER
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    public Response getHandedAssignmentFile(int id) {
-        //Vérifier que la personne est prof dans ce groupe ou que la personne fait partie de l'équipe ayant remis le travail
+    //@RolesAllowed({"etudiant", "enseignant"})
+    @Path("/download/handedassignmentfile/fileId={fileId}")
+    public Response getHandedAssignmentFile(@PathParam("fileId") int file_id) {
+        String cip = this.securityContext.getUserPrincipal().getName();
 
+        // Verifier que l'etudiant fait partie du groupe dans lequel l'assignment est
+        if(!handedAssignmentMapper.canDownloadHandedAssignmentFile(cip))
+            throw new WebApplicationException("You may not download this file", 401);
 
-        InputStream file = null;
+        DatabaseFile databaseFile = fileMapper.getFile(file_id);
+
+        FileDataAccess fileDataAccess = new LocalFileWriter();
         try {
-            file = new FileInputStream("babla");
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
+            return Response.ok(fileDataAccess.ReadFile(databaseFile), MediaType.APPLICATION_OCTET_STREAM)
+                    .header("Content-Disposition", "attachment; filename=\"" + databaseFile.displayed_name + databaseFile.extension + "\"") //optional
+                    .build();
+        }catch (Exception e){
+            throw new WebApplicationException("Error while reading file", 422);
         }
-        return Response.ok(file, MediaType.APPLICATION_OCTET_STREAM)
-                .header("Content-Disposition", "attachment; filename=\"" + "<<file name>>" + "\"") //optional
-                .build();
     }
 
 
@@ -59,7 +63,7 @@ public class FileService {
 
         String cip = this.securityContext.getUserPrincipal().getName();
 
-        // Verifier que l'etudiant fait partie du groupe dans lequel l'assignment est
+        // TODO CHANGER LA VERIFICATION, LE RESTE DEVRAIT ÊTRE LE MÊME
         if(!handedAssignmentMapper.canDownloadHandedAssignmentFile(cip))
             throw new WebApplicationException("You may not download this file", 401);
 
