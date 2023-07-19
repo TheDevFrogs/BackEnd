@@ -204,7 +204,7 @@ public class AssignmentService {
             }
 
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdHHmmssSS");
-            String fileName = dateFormat.format(currentTime) + "Remise";
+            String fileName = dateFormat.format(currentTime) + "_remise_" + cip;
 
             //Aller chercher le path de fichier
             String filePath = handedAssignmentMapper.getHandedAssignmentFilePath(team.id_team);

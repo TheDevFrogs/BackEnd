@@ -28,4 +28,9 @@ public interface HandedAssignmentMapper {
             "                LIMIT 1) " +
             "           , 0);")
     boolean canDownloadHandedAssignmentFile(@Param("cip") String cip);
+    @Select("SELECT CONCAT(g.id_session, '/',g.id_class,'/', g.no_group,'/',a.id_assignment,'/remises/') as filePath " +
+            "               FROM assignment as a " +
+            "               INNER JOIN groupe g on a.id_group = g.id_group " +
+            "                WHERE a.id_assignment = #{assignmentId};")
+    String getHandedAssignmentFolder(@Param("assignmentId") int assignmentId);
 }

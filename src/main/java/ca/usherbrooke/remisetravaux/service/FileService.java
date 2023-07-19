@@ -5,17 +5,13 @@ import ca.usherbrooke.remisetravaux.files.FileDataAccess;
 import ca.usherbrooke.remisetravaux.files.LocalFileWriter;
 import ca.usherbrooke.remisetravaux.persistence.FileMapper;
 import ca.usherbrooke.remisetravaux.persistence.HandedAssignmentMapper;
+import ca.usherbrooke.remisetravaux.persistence.AssignmentMapper;
 
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
+import javax.ws.rs.core.*;
+import java.io.*;
 import java.security.PublicKey;
 
 @Path("/file")
@@ -23,13 +19,15 @@ public class FileService {
 
     @Context
     SecurityContext securityContext;
-    // VOIR https://stackoverflow.com/questions/12239868/whats-the-correct-way-to-send-a-file-from-rest-web-service-to-client
 
     @Inject
     FileMapper fileMapper;
 
     @Inject
     HandedAssignmentMapper handedAssignmentMapper;
+
+    @Inject
+    AssignmentMapper assignmentMapper;
 
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
@@ -54,7 +52,6 @@ public class FileService {
         }
     }
 
-
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @RolesAllowed({"etudiant", "enseignant"})
@@ -73,6 +70,31 @@ public class FileService {
         try {
             return Response.ok(fileDataAccess.ReadFile(databaseFile), MediaType.APPLICATION_OCTET_STREAM)
                     .header("Content-Disposition", "attachment; filename=\"" + databaseFile.displayed_name + databaseFile.extension + "\"") //optional
+                    .build();
+        }catch (Exception e){
+            throw new WebApplicationException("Error while reading file", 422);
+        }
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    //@RolesAllowed({"etudiant", "enseignant"})
+    @Path("/download/grouphandedassignment/assignmentId={assignmentId}")
+    public Response getGroupHandedAssignments(@PathParam("assignmentId") int assignmentId) {
+        String cip = "lavm2134"; //this.securityContext.getUserPrincipal().getName();
+
+        // Verifier que l'etudiant fait partie du groupe dans lequel l'assignment est
+        if(!assignmentMapper.isTeacherOfAssignment(assignmentId,cip))
+            throw new WebApplicationException("You may not download this file", 401);
+
+        String folder = handedAssignmentMapper.getHandedAssignmentFolder(assignmentId);
+
+        FileDataAccess fileDataAccess = new LocalFileWriter();
+
+
+        try {
+            return Response.ok(fileDataAccess.getFolderAsZip(folder), MediaType.APPLICATION_OCTET_STREAM)
+                    .header("Content-Disposition", "attachment; filename=\"" + "Assignment_" + assignmentId + "_HandedAssignments.zip" + "\"")
                     .build();
         }catch (Exception e){
             throw new WebApplicationException("Error while reading file", 422);

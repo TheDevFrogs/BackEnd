@@ -51,7 +51,7 @@ public interface AssignmentMapper {
             @Result(property = "available_date", column = "available_date"),
             @Result(property = "due_date", column = "due_date"),
             @Result(property = "close_date", column = "close_date"),
-            @Result(property = "file.file_id", column = "id_file"),
+            @Result(property = "file.id_file", column = "id_file"),
             @Result(property = "file.file_name", column = "file_name")})
     @Select("SELECT a.id_assignment, a.name as name, a.description, a.available_date," +
             " a.due_date, a.close_date, f.id_file, f.name as filename " +
