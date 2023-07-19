@@ -16,4 +16,16 @@ public interface HandedAssignmentMapper {
             "VALUES (#{handedAssignment.id_team},#{handedAssignment.id_file},#{handedAssignment.handed_date})")
     @Options(useGeneratedKeys = true, keyProperty = "id_handedassignment", keyColumn = "id_handedassignment")
     void insertHandedAssignment(@Param("handedAssignment") HandedAssignment handedAssignment);
+
+    @Select("SELECT COALESCE( " +
+            "               (SELECT 1 " +
+            "                FROM handedassignment as ha " +
+            "                INNER JOIN teammember as tm on tm.id_team = ha.id_team " +
+            "                INNER JOIN team as t on ha.id_team = t.id_team " +
+            "                INNER JOIN assignment as a on a.id_assignment = t.id_assignment " +
+            "                INNER JOIN groupmember gm on a.id_group = gm.id_group " +
+            "                WHERE ha.id_file = 1 AND (tm.cip = #{cip} OR (gm.cip = #{cip} AND gm.id_role = 2)) " +
+            "                LIMIT 1) " +
+            "           , 0);")
+    boolean canDownloadHandedAssignmentFile(@Param("cip") String cip);
 }

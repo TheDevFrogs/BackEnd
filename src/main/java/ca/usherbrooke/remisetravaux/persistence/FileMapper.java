@@ -19,4 +19,8 @@ public interface FileMapper {
             "INNER JOIN file as f on f.id_file = a.id_file " +
             "WHERE a.id_assignment = #{assignment_id}")
     DatabaseFile getAssignmentFile(@Param("assignment_id") int assignment_id);
+    @Select("SELECT * " +
+            "FROM file AS f " +
+            "WHERE f.id_file = #{id_file}")
+    DatabaseFile getFile(@Param("id_file") int id_file);
 }

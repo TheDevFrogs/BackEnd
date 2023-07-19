@@ -28,10 +28,10 @@ public class LocalFileWriter implements FileDataAccess {
     }
 
     @Override
-    public byte[] ReadFile(DatabaseFile fileInfo) throws IOException {
-        File file = new File(initialPath + fileInfo.path, fileInfo.name);
+    public InputStream ReadFile(DatabaseFile fileInfo) throws IOException {
+        File file = new File(initialPath + fileInfo.path, fileInfo.name + fileInfo.extension);
         FileInputStream fip = new FileInputStream(file);
 
-        return fip.readAllBytes();
+        return fip;
     }
 }

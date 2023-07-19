@@ -1,15 +1,14 @@
 package ca.usherbrooke.remisetravaux.service;
 
+import ca.usherbrooke.remisetravaux.business.DatabaseFile;
 import ca.usherbrooke.remisetravaux.files.FileDataAccess;
 import ca.usherbrooke.remisetravaux.files.LocalFileWriter;
 import ca.usherbrooke.remisetravaux.persistence.FileMapper;
+import ca.usherbrooke.remisetravaux.persistence.HandedAssignmentMapper;
 
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -28,6 +27,9 @@ public class FileService {
 
     @Inject
     FileMapper fileMapper;
+
+    @Inject
+    HandedAssignmentMapper handedAssignmentMapper;
 
 
     //LES TYPES DE RETOUR DES MÉTHODES SERONT À CHANGER
@@ -55,26 +57,23 @@ public class FileService {
     @Path("/download/assignmentfile/fileId={fileId}")
     public Response getJoinedAssignmentFile(@PathParam("fileId") int file_id){
 
-        String cip = "lavm2134"; //this.securityContext.getUserPrincipal().getName();
+        String cip = "adwd"; //this.securityContext.getUserPrincipal().getName();
 
         // Verifier que l'etudiant fait partie du groupe dans lequel l'assignment est
-
-
+        if(!handedAssignmentMapper.canDownloadHandedAssignmentFile(cip))
+            throw new WebApplicationException("You may not download this file", 401);
         //Lire les info du fileID
-
+        DatabaseFile databaseFile = fileMapper.getFile(file_id);
 
         //Lire le fichier sur le
 
         FileDataAccess fileDataAccess = new LocalFileWriter();
-
-        InputStream file = null;
         try {
-            file = new FileInputStream("babla");
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
+            return Response.ok(fileDataAccess.ReadFile(databaseFile), MediaType.APPLICATION_OCTET_STREAM)
+                    .header("Content-Disposition", "attachment; filename=\"" + databaseFile.displayed_name + databaseFile.extension + "\"") //optional
+                    .build();
+        }catch (Exception e){
+            throw new WebApplicationException("Error while reading file", 422);
         }
-        return Response.ok(file, MediaType.APPLICATION_OCTET_STREAM)
-                .header("Content-Disposition", "attachment; filename=\"" + "<<file name>>" + "\"") //optional
-                .build();
     }
 }
