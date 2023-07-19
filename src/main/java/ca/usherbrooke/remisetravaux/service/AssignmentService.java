@@ -211,6 +211,7 @@ public class AssignmentService {
             //Ajouter le fichier dans la bd
             DatabaseFile databaseFile = new DatabaseFile();
             databaseFile.name = fileName;
+            databaseFile.displayed_name = fileName;
             databaseFile.path = filePath;
             databaseFile.extension = ".zip";
             fileMapper.insertFile(databaseFile);
