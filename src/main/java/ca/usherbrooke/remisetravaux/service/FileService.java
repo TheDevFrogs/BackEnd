@@ -33,7 +33,7 @@ public class FileService {
 
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    //@RolesAllowed({"etudiant", "enseignant"})
+    @RolesAllowed({"etudiant", "enseignant"})
     @Path("/download/handedassignmentfile/fileId={fileId}")
     public Response getHandedAssignmentFile(@PathParam("fileId") int file_id) {
         String cip = this.securityContext.getUserPrincipal().getName();
