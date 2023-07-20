@@ -96,10 +96,10 @@ public class FileService {
 
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    //@RolesAllowed({"etudiant", "enseignant"})
+    @RolesAllowed({"etudiant", "enseignant"})
     @Path("/download/grouphandedassignment/assignmentId={assignmentId}")
     public Response getGroupHandedAssignments(@PathParam("assignmentId") int assignmentId) {
-        String cip = "lavm2134";//this.securityContext.getUserPrincipal().getName();
+        String cip = this.securityContext.getUserPrincipal().getName();
 
         // Verifier que l'etudiant fait partie du groupe dans lequel l'assignment est
         if(!assignmentMapper.isTeacherOfAssignment(assignmentId,cip))
