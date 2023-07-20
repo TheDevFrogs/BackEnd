@@ -78,6 +78,20 @@ public interface AssignmentMapper {
             "WHERE tm.cip = #{cip} AND t.id_assignment = #{id_assignment}")
     AssignmentFile getCorrectedWorkFile(@Param("id_assignment") int id_assignment, @Param("cip") String cip);
 
+    @Select("SELECT ha.handed_date, f.displayed_name, f.id_file, f.extension " +
+            "FROM team AS t " +
+            "INNER JOIN handedassignment as ha on ha.id_team = t.id_team " +
+            "INNER JOIN file as f on f.id_file = ha.id_file " +
+            "WHERE t.id_team = #{team_id};")
+    List<AssignmentFile> getHandedWorkFiles(@Param("team_id") int team_id);
+
+    @Select("SELECT ac.corrected_date as handed_date , f.displayed_name, f.id_file, f.extension " +
+            "FROM team AS t " +
+            "INNER JOIN assignmentcorrection as ac on ac.id_team = t.id_team " +
+            "INNER JOIN file as f on f.id_file = ac.id_file " +
+            "WHERE t.id_team = #{team_id}")
+    List<AssignmentFile> getCorrectedWorkFiles(@Param("team_id") int team_id);
+
     @Select("SELECT COALESCE( " +
             "    (SELECT 1 " +
             "FROM AvailableAssignment as a " +

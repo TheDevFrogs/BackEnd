@@ -265,7 +265,7 @@ public class FileService {
         try {
             int teamId = Integer.parseInt(input.getFormDataPart("teamId", String.class, null));
 
-            if (fileMapper.canUploadCorrectionFile(cip,teamId)) {
+            if (teammapper.isTeacherOfTeam(cip,teamId)) {
                 throw new WebApplicationException("You may not upload this file", 401);
             }
 

@@ -2,6 +2,7 @@ package ca.usherbrooke.remisetravaux.service;
 
 import br.com.fluentvalidator.context.ValidationResult;
 import ca.usherbrooke.remisetravaux.business.*;
+import ca.usherbrooke.remisetravaux.dto.TeamCorrectionPage;
 import ca.usherbrooke.remisetravaux.dto.assignment.TeacherAssignmentPage;
 import ca.usherbrooke.remisetravaux.files.FileDataAccess;
 import ca.usherbrooke.remisetravaux.files.LocalFileWriter;
@@ -47,6 +48,9 @@ public class AssignmentService {
 
     @Inject
     AssignmentMapper assignmentMapper;
+
+    @Inject
+    TeamMapper teamMapper;
 
     @POST
     @Path("/create")
@@ -315,5 +319,24 @@ public class AssignmentService {
         }
 
         return assignment;
+    }
+
+    //TODO tester
+    @GET
+    @Path("/getTeamAssignmentPreview/teamId={teamId}")
+    @RolesAllowed({"etudiant", "enseignant"})
+    @Produces(MediaType.APPLICATION_JSON)
+    public TeamCorrectionPage getTeamAssignments(@PathParam("teamId") int teamId) {
+        String cip = this.securityContext.getUserPrincipal().getName();
+
+        if (!teamMapper.isTeacherOfTeam(cip,teamId))
+            throw new WebApplicationException("You are not the teacher of this team", 401);
+
+        TeamCorrectionPage teamCorrectionPage = new TeamCorrectionPage();
+
+        teamCorrectionPage.corrected_work_files = assignmentMapper.getCorrectedWorkFiles(teamId);
+        teamCorrectionPage.handed_work_files = assignmentMapper.getHandedWorkFiles(teamId);
+
+        return new TeamCorrectionPage();
     }
 }
