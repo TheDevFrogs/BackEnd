@@ -145,6 +145,7 @@ public class FileService {
 
     @POST
     @Transactional
+    @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed({"etudiant", "enseignant"})
     @Path("/upload/groupassignmentcorrection")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
