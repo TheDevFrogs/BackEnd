@@ -29,4 +29,16 @@ public interface FileMapper {
             "FROM file AS f " +
             "WHERE f.id_file = #{id_file}")
     DatabaseFile getFile(@Param("id_file") int id_file);
+
+    @Select("SELECT COALESCE( " +
+            "               (SELECT 1 " +
+            "        FROM assignmentcorrection as ac " +
+            "        INNER JOIN teammember as tm on tm.id_team = ac.id_team " +
+            "        INNER JOIN team as t on ac.id_team = t.id_team " +
+            "        INNER JOIN assignment as a on a.id_assignment = t.id_assignment " +
+            "        INNER JOIN groupmember gm on a.id_group = gm.id_group " +
+            "        WHERE ac.id_file = #{file_id} AND (tm.cip = #{cip} OR (gm.cip = #{cip} AND gm.id_role = 2)) " +
+            "        LIMIT 1) " +
+            "           , 0);")
+    boolean canDownloadCorrectionFile(@Param("cip") String cip, @Param("file_id") int file_id);
 }

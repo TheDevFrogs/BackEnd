@@ -11,6 +11,8 @@ import ca.usherbrooke.remisetravaux.persistence.HandedAssignmentMapper;
 import ca.usherbrooke.remisetravaux.persistence.AssignmentMapper;
 import ca.usherbrooke.remisetravaux.persistence.TeamMapper;
 import ca.usherbrooke.remisetravaux.service.logic.fileservice.FileServiceLogic;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
@@ -56,7 +58,7 @@ public class FileService {
         String cip = this.securityContext.getUserPrincipal().getName();
 
         // Verifier que l'etudiant fait partie du groupe dans lequel l'assignment est
-        if(!handedAssignmentMapper.canDownloadHandedAssignmentFile(cip))
+        if(!handedAssignmentMapper.canDownloadHandedAssignmentFile(cip, file_id))
             throw new WebApplicationException("You may not download this file", 401);
 
         DatabaseFile databaseFile = fileMapper.getFile(file_id);
@@ -79,7 +81,7 @@ public class FileService {
         String cip = this.securityContext.getUserPrincipal().getName();
 
         // Verifier que l'etudiant fait partie du groupe dans lequel l'assignment est
-        if(!handedAssignmentMapper.canDownloadHandedAssignmentFile(cip))
+        if(!fileMapper.canDownloadCorrectionFile(cip, file_id))
             throw new WebApplicationException("You may not download this file", 401);
 
         DatabaseFile databaseFile = fileMapper.getFile(file_id);

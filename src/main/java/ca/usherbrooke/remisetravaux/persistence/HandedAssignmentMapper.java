@@ -25,10 +25,10 @@ public interface HandedAssignmentMapper {
             "                INNER JOIN team as t on ha.id_team = t.id_team " +
             "                INNER JOIN assignment as a on a.id_assignment = t.id_assignment " +
             "                INNER JOIN groupmember gm on a.id_group = gm.id_group " +
-            "                WHERE ha.id_file = 1 AND (tm.cip = #{cip} OR (gm.cip = #{cip} AND gm.id_role = 2)) " +
+            "                WHERE ha.id_file = #{file_id} AND (tm.cip = #{cip} OR (gm.cip = #{cip} AND gm.id_role = 2)) " +
             "                LIMIT 1) " +
             "           , 0);")
-    boolean canDownloadHandedAssignmentFile(@Param("cip") String cip);
+    boolean canDownloadHandedAssignmentFile(@Param("cip") String cip, @Param("file_id") int file_id);
     @Select("SELECT CONCAT(g.id_session, '/',g.id_class,'/', g.no_group,'/',a.id_assignment,'/remises/') as filePath " +
             "               FROM assignment as a " +
             "               INNER JOIN groupe g on a.id_group = g.id_group " +
