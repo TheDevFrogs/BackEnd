@@ -1,18 +1,34 @@
 package ca.usherbrooke.remisetravaux.service;
 
+import ca.usherbrooke.remisetravaux.business.AssignmentCorrection;
 import ca.usherbrooke.remisetravaux.business.DatabaseFile;
+import ca.usherbrooke.remisetravaux.business.HandedAssignment;
+import ca.usherbrooke.remisetravaux.business.Team;
 import ca.usherbrooke.remisetravaux.files.FileDataAccess;
 import ca.usherbrooke.remisetravaux.files.LocalFileWriter;
 import ca.usherbrooke.remisetravaux.persistence.FileMapper;
 import ca.usherbrooke.remisetravaux.persistence.HandedAssignmentMapper;
 import ca.usherbrooke.remisetravaux.persistence.AssignmentMapper;
+import ca.usherbrooke.remisetravaux.persistence.TeamMapper;
+import ca.usherbrooke.remisetravaux.service.logic.fileservice.FileServiceLogic;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
+import org.postgresql.core.Tuple;
 
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
+import javax.transaction.Transactional;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.io.*;
-import java.security.PublicKey;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 @Path("/file")
 public class FileService {
@@ -28,6 +44,9 @@ public class FileService {
 
     @Inject
     AssignmentMapper assignmentMapper;
+
+    @Inject
+    SqlSessionFactory sqlSessionFactory;
 
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
@@ -78,10 +97,10 @@ public class FileService {
 
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    @RolesAllowed({"etudiant", "enseignant"})
+    //@RolesAllowed({"etudiant", "enseignant"})
     @Path("/download/grouphandedassignment/assignmentId={assignmentId}")
     public Response getGroupHandedAssignments(@PathParam("assignmentId") int assignmentId) {
-        String cip = this.securityContext.getUserPrincipal().getName();
+        String cip = "lavm2134";//this.securityContext.getUserPrincipal().getName();
 
         // Verifier que l'etudiant fait partie du groupe dans lequel l'assignment est
         if(!assignmentMapper.isTeacherOfAssignment(assignmentId,cip))
@@ -91,7 +110,6 @@ public class FileService {
 
         FileDataAccess fileDataAccess = new LocalFileWriter();
 
-
         try {
             return Response.ok(fileDataAccess.getFolderAsZip(folder), MediaType.APPLICATION_OCTET_STREAM)
                     .header("Content-Disposition", "attachment; filename=\"" + "Assignment_" + assignmentId + "_HandedAssignments.zip" + "\"")
@@ -99,5 +117,105 @@ public class FileService {
         }catch (Exception e){
             throw new WebApplicationException("Error while reading file", 422);
         }
+    }
+
+    @POST
+    @Transactional
+    @RolesAllowed({"etudiant", "enseignant"})
+    @Path("/upload/grouphandedassignment")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public String createHandedAssignment(MultipartFormDataInput input) {
+        Date currentTime = new Date();
+        String cip =  this.securityContext.getUserPrincipal().getName();
+
+        SqlSession sqlSession = sqlSessionFactory.openSession(false);
+        FileMapper filemapper = sqlSession.getMapper(FileMapper.class);
+        TeamMapper teammaper = sqlSession.getMapper(TeamMapper.class);
+        HandedAssignmentMapper handedAssignmentmapper =  sqlSession.getMapper(HandedAssignmentMapper.class);
+        try {
+            int assignmentId = Integer.parseInt(input.getFormDataPart("assignmentId", String.class, null));
+            if(!assignmentMapper.isTeacherOfAssignment(assignmentId,cip)) {
+                throw new WebApplicationException("You may not upload this file", 401);
+            }
+
+            byte[] fileData = LocalFileWriter.getFileData(input.getFormDataMap().get("file").get(0));
+            String filePath = handedAssignmentMapper.getCorrectionFolder(assignmentId);
+
+            ZipInputStream zipStream = new ZipInputStream(new ByteArrayInputStream(fileData));
+
+            List<Team> teams = teammaper.getAllAssignmentTeams(assignmentId);
+
+            int currentTeamNumber = -1;
+            List<FileServiceLogic> fileServiceLogics = new ArrayList<>();
+            ZipOutputStream zipOutputStream = null;
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdHHmmssSS");
+
+            FileServiceLogic fileServiceLogic = null;
+            ZipEntry entry = null;
+            while ((entry = zipStream.getNextEntry()) != null)
+            {
+                String entryName = entry.toString();
+                int newNumber = Integer.parseInt(entryName.substring(entryName.indexOf("_") + 1,entryName.indexOf("/")));
+                String fileName = entryName.substring(entryName.indexOf("/") + 1);
+
+                if (currentTeamNumber != newNumber)
+                {
+                    if (currentTeamNumber != -1){
+                        zipOutputStream.finish();
+                        zipOutputStream.flush();
+                        zipOutputStream.close();
+                        fileServiceLogic.byteArrayOutputStream.flush();
+                        fileServiceLogic.byteArrayOutputStream.close();
+                    }
+                    fileServiceLogic = new FileServiceLogic();
+                    fileServiceLogics.add(fileServiceLogic);
+                    fileServiceLogic.byteArrayOutputStream = new ByteArrayOutputStream();
+                    zipOutputStream = new ZipOutputStream(fileServiceLogic.byteArrayOutputStream);
+
+                    fileServiceLogic.team = teams.stream().filter(team -> team.no_equipe == newNumber).findAny().orElse(null);
+                    DatabaseFile databaseFile = new DatabaseFile();
+                    databaseFile.name = dateFormat.format(currentTime) + "correction";
+                    databaseFile.displayed_name = dateFormat.format(currentTime) + "correction";
+                    databaseFile.path = filePath + "equipe_" + newNumber + "/";
+                    databaseFile.extension = ".zip";
+                    fileServiceLogic.databaseFile = databaseFile;
+                    currentTeamNumber = newNumber;
+                }
+
+                ZipEntry ze = new ZipEntry(fileName);
+                zipOutputStream.putNextEntry(ze);
+                //read the file and write to ZipOutputStream
+                zipOutputStream.write(zipStream.readAllBytes());
+                zipOutputStream.closeEntry();
+            }
+
+            zipOutputStream.finish();
+            zipOutputStream.flush();
+            zipOutputStream.close();
+            fileServiceLogic.byteArrayOutputStream.flush();
+            fileServiceLogic.byteArrayOutputStream.close();
+
+            //Once all of the files have recompressed we can create the files and the assignmentCorrections
+            FileDataAccess fileDataAccess = new LocalFileWriter();
+            for (FileServiceLogic file : fileServiceLogics){
+                filemapper.insertFile(file.databaseFile);
+                AssignmentCorrection assignmentCorrection = new AssignmentCorrection();
+                assignmentCorrection.id_assignment = assignmentId;
+                assignmentCorrection.id_file = file.databaseFile.id_file;
+                assignmentCorrection.corrected_date = currentTime;
+                assignmentCorrection.id_team = file.team.id_team;
+                handedAssignmentmapper.insertAssignmentCorrection(assignmentCorrection);
+
+                fileDataAccess.WriteFile(file.databaseFile,file.byteArrayOutputStream.toByteArray());
+            }
+            sqlSession.commit();
+        } catch (IOException e) {
+            sqlSession.rollback();
+            throw new WebApplicationException("Error while uploading files", 422);
+        }finally {
+            sqlSession.close();
+        }
+
+        return "success";
     }
 }

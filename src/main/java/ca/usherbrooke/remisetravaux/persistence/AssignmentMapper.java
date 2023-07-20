@@ -1,10 +1,13 @@
 package ca.usherbrooke.remisetravaux.persistence;
 
 import ca.usherbrooke.remisetravaux.business.Assignment;
+import ca.usherbrooke.remisetravaux.business.Team;
 import ca.usherbrooke.remisetravaux.dto.assignment.AssignmentFile;
 import ca.usherbrooke.remisetravaux.dto.assignment.TeacherAssignmentPage;
 import org.apache.ibatis.annotations.*;
 import ca.usherbrooke.remisetravaux.dto.assignment.StudentAssignmentPage;
+
+import java.util.List;
 
 @Mapper
 public interface AssignmentMapper {

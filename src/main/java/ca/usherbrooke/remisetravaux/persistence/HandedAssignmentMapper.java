@@ -1,11 +1,12 @@
 package ca.usherbrooke.remisetravaux.persistence;
 
+import ca.usherbrooke.remisetravaux.business.AssignmentCorrection;
 import ca.usherbrooke.remisetravaux.business.HandedAssignment;
 import org.apache.ibatis.annotations.*;
 
 @Mapper
 public interface HandedAssignmentMapper {
-    @Select("SELECT CONCAT(g.id_session, '/',g.id_class,'/',no_group,'/',a.id_assignment,'/remises/',t.no_equipe,'/') as filePath " +
+    @Select("SELECT CONCAT(g.id_session, '/',g.id_class,'/',no_group,'/',a.id_assignment,'/remises/equipe_',t.no_equipe,'/') as filePath " +
             "FROM team as t " +
             "INNER JOIN AvailableAssignment a on a.id_assignment = t.id_assignment " +
             "INNER JOIN groupe AS g ON g.id_group = a.id_group " +
@@ -33,4 +34,14 @@ public interface HandedAssignmentMapper {
             "               INNER JOIN groupe g on a.id_group = g.id_group " +
             "                WHERE a.id_assignment = #{assignmentId};")
     String getHandedAssignmentFolder(@Param("assignmentId") int assignmentId);
+
+    @Select("SELECT CONCAT(g.id_session, '/',g.id_class,'/', g.no_group,'/',a.id_assignment,'/corrections/') as filePath " +
+            "               FROM assignment as a " +
+            "               INNER JOIN groupe g on a.id_group = g.id_group " +
+            "                WHERE a.id_assignment = #{assignmentId};")
+    String getCorrectionFolder(@Param("assignmentId") int assignmentId);
+    @Insert("INSERT INTO assignmentcorrection (id_assignment, id_team, id_file, corrected_date) " +
+            "values (#{ass.id_assignment}, #{ass.id_team}, #{ass.id_file}, #{ass.corrected_date}); ")
+    @Options(useGeneratedKeys = true, keyProperty = "id_assignmentcorrection", keyColumn = "id_assignmentcorrection")
+    void insertAssignmentCorrection(@Param("ass") AssignmentCorrection ass);
 }

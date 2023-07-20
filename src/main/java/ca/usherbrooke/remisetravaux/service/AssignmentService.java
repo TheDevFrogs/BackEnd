@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 
 @Path("/assignment")
 public class AssignmentService {
@@ -72,7 +73,7 @@ public class AssignmentService {
 
             assignment = new Assignment(input);
             assignment.id_group = id_group;
-            fileData = getFileData(input.getFormDataMap().get("file").get(0));
+            fileData = LocalFileWriter.getFileData(input.getFormDataMap().get("file").get(0));
 
             final AssignmentValidator validator = new AssignmentValidator();
             ValidationResult validationResult = validator.validate(assignment);
@@ -117,17 +118,6 @@ public class AssignmentService {
         }
 
         return assignment;
-    }
-
-
-
-    private byte[] getFileData(InputPart inputPart) throws IOException {
-
-        MultivaluedMap<String, String> header = inputPart.getHeaders();
-
-        // convert the uploaded file to inputstream
-        InputStream inputStream = inputPart.getBody(InputStream.class, null);
-        return IOUtils.toByteArray(inputStream);
     }
 
     @GET
@@ -184,7 +174,7 @@ public class AssignmentService {
 
             if (!assignmentMapper.isStudentOfAssingment(assignmentId, cip))
                 throw new WebApplicationException("You are not a student of this assignment", 401);
-            fileData = getFileData(uploadForm.get("file").get(0));
+            fileData =  LocalFileWriter.getFileData(uploadForm.get("file").get(0));
             if (fileData.length == 0)
                 throw new WebApplicationException("File received was empty", 400);
             //Vérifier si l'étudiant est déja dans un équipe
@@ -205,6 +195,7 @@ public class AssignmentService {
 
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdHHmmssSS");
             String fileName = dateFormat.format(currentTime) + "_remise_" + cip;
+
 
             //Aller chercher le path de fichier
             String filePath = handedAssignmentMapper.getHandedAssignmentFilePath(team.id_team);
@@ -282,7 +273,7 @@ public class AssignmentService {
             assignment.id_group = previousAssignment.id_group;
             assignment.id_assignment = id_assignment;
 
-            fileData = getFileData(input.getFormDataMap().get("file").get(0));
+            fileData = LocalFileWriter.getFileData(input.getFormDataMap().get("file").get(0));
 
             final AssignmentValidator validator = new AssignmentValidator();
             ValidationResult validationResult = validator.validate(assignment);
@@ -295,10 +286,8 @@ public class AssignmentService {
             throw new WebApplicationException("Dates are sent in the wrong format", 400);
         }
 
-
         try {
             //Update Assignment
-
             if (fileData.length != 0) {
                 //Dans le cas ou un
                 DatabaseFile databaseFile = fileMapper.getAssignmentFile(assignment.id_assignment);

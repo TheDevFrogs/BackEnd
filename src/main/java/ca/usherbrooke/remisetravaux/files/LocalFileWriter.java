@@ -1,8 +1,11 @@
 package ca.usherbrooke.remisetravaux.files;
 
 import ca.usherbrooke.remisetravaux.business.DatabaseFile;
+import org.apache.commons.io.IOUtils;
+import org.jboss.resteasy.plugins.providers.multipart.InputPart;
 
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.*;
 import java.nio.file.Files;
@@ -79,5 +82,13 @@ public class LocalFileWriter implements FileDataAccess {
             else filesListInDir.addAll(populateFilesList(file));
         }
         return filesListInDir;
+    }
+
+    public static byte[] getFileData(InputPart inputPart) throws IOException {
+        MultivaluedMap<String, String> header = inputPart.getHeaders();
+
+        // convert the uploaded file to inputstream
+        InputStream inputStream = inputPart.getBody(InputStream.class, null);
+        return IOUtils.toByteArray(inputStream);
     }
 }

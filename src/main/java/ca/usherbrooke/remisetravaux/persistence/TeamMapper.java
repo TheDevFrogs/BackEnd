@@ -24,4 +24,9 @@ public interface TeamMapper {
     @Insert("INSERT INTO teammember (cip, id_team) " +
             "VALUES (#{teamMember.cip}, #{teamMember.id_team})")
     void insertTeamMember(@Param("teamMember") TeamMember teamMember);
+
+    @Select("Select * " +
+            "FROM TEAM " +
+            "WHERE id_assignment = #{id_assignment}")
+    List<Team> getAllAssignmentTeams(@Param("id_assignment") int assignmentId);
 }
