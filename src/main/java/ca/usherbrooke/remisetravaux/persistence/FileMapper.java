@@ -41,4 +41,14 @@ public interface FileMapper {
             "        LIMIT 1) " +
             "           , 0);")
     boolean canDownloadCorrectionFile(@Param("cip") String cip, @Param("file_id") int file_id);
+
+
+    @Select("SELECT COALESCE( " +
+            "               (SELECT 1 " +
+            "FROM team as t " +
+            "INNER JOIN assignment a on t.id_assignment = a.id_assignment " +
+            "INNER JOIN groupmember as gm on gm.id_group = a.id_group " +
+            "WHERE t.id_team = #{id_team} AND cip = #{cip} AND gm.id_role = 2 " +
+            "LIMIT 1),0);")
+    boolean canUploadCorrectionFile(@Param("cip") String cip, @Param("id_team") int teamId);
 }

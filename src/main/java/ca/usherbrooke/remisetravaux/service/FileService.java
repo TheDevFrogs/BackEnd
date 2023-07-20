@@ -149,7 +149,7 @@ public class FileService {
     @RolesAllowed({"etudiant", "enseignant"})
     @Path("/upload/groupassignmentcorrection")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public String createHandedAssignment(MultipartFormDataInput input) {
+    public String uploadGroupAssignmentCorrection(MultipartFormDataInput input) {
         Date currentTime = new Date();
         String cip =  this.securityContext.getUserPrincipal().getName();
 
@@ -242,5 +242,65 @@ public class FileService {
         }
 
         return "success";
+    }
+
+
+    //TODO tester
+    @POST
+    @Transactional
+    @RolesAllowed({"etudiant", "enseignant"})
+    @Path("/upload/assignmentcorrection")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.APPLICATION_JSON)
+    public AssignmentCorrection createCorrectedAssignment(MultipartFormDataInput input)  {
+        Date currentTime = new Date();
+        String cip =  this.securityContext.getUserPrincipal().getName();
+
+        SqlSession sqlSession = sqlSessionFactory.openSession(false);
+        FileMapper filemapper = sqlSession.getMapper(FileMapper.class);
+        HandedAssignmentMapper handedAssignmentmapper =  sqlSession.getMapper(HandedAssignmentMapper.class);
+        TeamMapper teammapper = sqlSession.getMapper(TeamMapper.class);
+        AssignmentCorrection assignmentCorrection;
+
+        try {
+            int teamId = Integer.parseInt(input.getFormDataPart("teamId", String.class, null));
+
+            if (fileMapper.canUploadCorrectionFile(cip,teamId)) {
+                throw new WebApplicationException("You may not upload this file", 401);
+            }
+
+            byte[] fileData = LocalFileWriter.getFileData(input.getFormDataMap().get("file").get(0));
+
+            Team team = teammapper.getTeam(teamId);
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdHHmmssSS");
+
+            String filePath = handedAssignmentmapper.getCorrectionFolder(team.id_assignment);
+            DatabaseFile databaseFile = new DatabaseFile();
+            databaseFile.name = dateFormat.format(currentTime) + "correction";
+            databaseFile.displayed_name = dateFormat.format(currentTime) + "correction";
+            databaseFile.path = filePath + "equipe_" + team.no_equipe + "/";
+            databaseFile.extension = ".zip";
+
+            filemapper.insertFile(databaseFile);
+
+            assignmentCorrection = new AssignmentCorrection();
+            assignmentCorrection.id_assignment = team.id_assignment;
+            assignmentCorrection.id_file = databaseFile.id_file;
+            assignmentCorrection.corrected_date = currentTime;
+            assignmentCorrection.id_team = teamId;
+
+            handedAssignmentmapper.insertAssignmentCorrection(assignmentCorrection);
+
+            FileDataAccess fileDataAccess = new LocalFileWriter();
+            fileDataAccess.WriteFile(databaseFile,fileData);
+            sqlSession.commit();
+        } catch (IOException e) {
+            sqlSession.rollback();
+            throw new WebApplicationException("Error while uploading files", 422);
+        }
+        finally {
+            sqlSession.close();
+        }
+        return assignmentCorrection;
     }
 }

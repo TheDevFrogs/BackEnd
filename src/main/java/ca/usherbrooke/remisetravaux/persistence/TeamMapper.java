@@ -19,6 +19,10 @@ public interface TeamMapper {
             "VALUES (#{team.id_assignment})")
     @Options(useGeneratedKeys = true, keyProperty = "id_team", keyColumn = "id_team")
     void insertTeam(@Param("team") Team team);
+    @Select("SELECT * " +
+            "FROM team as t " +
+            "WHERE t.id_team = #{team_id}")
+    Team getTeam(@Param("team_id") int teamId);
 
 
     @Insert("INSERT INTO teammember (cip, id_team) " +

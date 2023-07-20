@@ -18,6 +18,7 @@ public interface HandedAssignmentMapper {
     @Options(useGeneratedKeys = true, keyProperty = "id_handedassignment", keyColumn = "id_handedassignment")
     void insertHandedAssignment(@Param("handedAssignment") HandedAssignment handedAssignment);
 
+    //TODO
     @Select("SELECT COALESCE( " +
             "               (SELECT 1 " +
             "                FROM handedassignment as ha " +
