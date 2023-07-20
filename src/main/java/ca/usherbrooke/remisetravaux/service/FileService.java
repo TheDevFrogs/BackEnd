@@ -79,8 +79,7 @@ public class FileService {
 
         String cip = this.securityContext.getUserPrincipal().getName();
 
-        // TODO CHANGER LA VERIFICATION, LE RESTE DEVRAIT ÊTRE LE MÊME
-        if(!handedAssignmentMapper.canDownloadHandedAssignmentFile(cip))
+        if(!fileMapper.canDownloadAssignmentFile(cip,file_id))
             throw new WebApplicationException("You may not download this file", 401);
 
         DatabaseFile databaseFile = fileMapper.getFile(file_id);
