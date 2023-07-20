@@ -74,6 +74,29 @@ public class FileService {
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @RolesAllowed({"etudiant", "enseignant"})
+    @Path("/download/assignmentcorrection/fileId={fileId}")
+    public Response getAssignmentCorrection(@PathParam("fileId") int file_id){
+        String cip = this.securityContext.getUserPrincipal().getName();
+
+        // Verifier que l'etudiant fait partie du groupe dans lequel l'assignment est
+        if(!handedAssignmentMapper.canDownloadHandedAssignmentFile(cip))
+            throw new WebApplicationException("You may not download this file", 401);
+
+        DatabaseFile databaseFile = fileMapper.getFile(file_id);
+
+        FileDataAccess fileDataAccess = new LocalFileWriter();
+        try {
+            return Response.ok(fileDataAccess.ReadFile(databaseFile), MediaType.APPLICATION_OCTET_STREAM)
+                    .header("Content-Disposition", "attachment; filename=\"" + databaseFile.displayed_name + databaseFile.extension + "\"") //optional
+                    .build();
+        }catch (Exception e){
+            throw new WebApplicationException("Error while reading file", 422);
+        }
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @RolesAllowed({"etudiant", "enseignant"})
     @Path("/download/assignmentfile/fileId={fileId}")
     public Response getJoinedAssignmentFile(@PathParam("fileId") int file_id){
 
@@ -121,7 +144,7 @@ public class FileService {
     @POST
     @Transactional
     @RolesAllowed({"etudiant", "enseignant"})
-    @Path("/upload/grouphandedassignment")
+    @Path("/upload/groupassignmentcorrection")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public String createHandedAssignment(MultipartFormDataInput input) {
         Date currentTime = new Date();
