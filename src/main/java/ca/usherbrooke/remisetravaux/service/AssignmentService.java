@@ -306,9 +306,9 @@ public class AssignmentService {
 
                 FileDataAccess dataAccess = new LocalFileWriter();
                 dataAccess.WriteFile(databaseFile, fileData);
-
-                //We need to update the assignment and add the file to it
             }
+
+            //We need to update the assignment and add the file to it
             assignmentMapper.updateAssignment(assignment);
             sqlSession.commit();
         } catch (Throwable e) {
